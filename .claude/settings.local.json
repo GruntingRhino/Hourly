@@ -10,7 +10,14 @@
       "Bash(npm create:*)",
       "Bash(npm install:*)",
       "Bash(npx tsc:*)",
-      "Bash(npx vite build:*)"
+      "Bash(npx vite build:*)",
+      "mcp__Neon__list_projects",
+      "mcp__Neon__run_sql",
+      "Bash(DATABASE_URL=\"postgresql://neondb_owner:npg_dH1oc2rmtqAZ@ep-wild-sun-aisc60p4-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require\" npx prisma db push:*)",
+      "Bash(nslookup:*)",
+      "Bash(nc:*)",
+      "Bash(echo:*)",
+      "mcp__Neon__run_sql_transaction"
     ]
   }
 }

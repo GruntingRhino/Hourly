@@ -17,7 +17,10 @@
       "Bash(nslookup:*)",
       "Bash(nc:*)",
       "Bash(echo:*)",
-      "mcp__Neon__run_sql_transaction"
+      "mcp__Neon__run_sql_transaction",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }

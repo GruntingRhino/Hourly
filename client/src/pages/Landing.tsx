@@ -451,7 +451,12 @@ export default function Landing() {
                   </button>
                 ))}
               </div>
-              <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
+              <div
+                className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0"
+                tabIndex={0}
+                role="region"
+                aria-label="Featured service opportunities"
+              >
                 {activeTab === "school" && (
                   <div className="min-w-[640px] md:min-w-0"><SchoolDashboardMock /></div>
                 )}

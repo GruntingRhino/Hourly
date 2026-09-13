@@ -77,6 +77,13 @@ app.set("trust proxy", 1);
 // Strict-Transport-Security, X-XSS-Protection, and others.
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }, // allow /uploads assets
+  contentSecurityPolicy: {
+    directives: {
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      connectSrc: ["'self'", "https://fonts.googleapis.com"],
+    },
+  },
 }));
 
 // Lock CORS to known origins. In dev any localhost port is fine;

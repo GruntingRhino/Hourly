@@ -30,6 +30,7 @@ import billingRoutes from "./routes/billing";
 import schoolProcurementRoutes from "./routes/schoolProcurement";
 import schoolPartnerRoutes from "./routes/schoolPartners";
 import stripeWebhookRoutes from "./routes/stripeWebhooks";
+import studentPreferencesRoutes from "./routes/studentPreferences";
 import { startReminderScheduler } from "./lib/reminders";
 import { startUploadCleanupJob } from "./lib/uploadCleanup";
 import { maybeRunEventReminderCycle, startEventReminderScheduler } from "./lib/eventReminders";
@@ -172,6 +173,7 @@ app.use("/api/beneficiaries", beneficiaryRoutes);
 app.use("/api/invitations", invitationRoutes);
 app.use("/api/self-submissions", selfSubmissionRoutes);
 app.use("/api/classrooms", classroomRoutes);
+app.use("/api/student-preferences", studentPreferencesRoutes);
 
 // Legacy routes (kept for backward compat)
 app.use("/api/opportunities", opportunityRoutes);

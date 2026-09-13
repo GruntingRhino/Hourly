@@ -6,6 +6,7 @@ import { authenticate } from "../middleware/auth";
 import { requireRole } from "../middleware/rbac";
 import { resolveEffectiveRules, checkCategoryCap, getBlockedCategoryKeysForStudent, normalizeCategoryKey } from "../lib/schoolRules";
 import { assertStudentAccessibleToStaff, buildCohortScopedStudentWhere, getStaffAccessScope } from "../lib/cohortAccess";
+import { createHybridRateLimit } from "../middleware/rateLimit";
 import { resolveStudentSchoolId } from "../lib/dataAccessLog";
 import { recordServiceHourLedgerEntry } from "../lib/serviceHourLedger";
 import {
@@ -18,6 +19,24 @@ import {
 const router = Router();
 
 const selfSubmittedRequestStatusEnum = z.enum(["PENDING", "APPROVED", "REJECTED", "REVISION_REQUESTED", "CANCELLED"]);
+
+// 10 bulk CSV imports per staff member per hour — each call synchronously
+// parses and validates up to 500 rows, so unbounded bursts are a CPU/memory
+// concern even with per-payload size caps below.
+const csvImportLimiter = createHybridRateLimit({
+  namespace: "csv-import",
+  windowMs: 60 * 60 * 1000,
+  maxPerIp: 30,
+  maxPerUser: 10,
+});
+
+// Pre-parse bound on the raw CSV payload: rejects oversized bodies before the
+// synchronous csv-parse call. 500_000 chars still comfortably fits the 500-row
+// post-parse cap at typical row sizes.
+const MAX_CSV_PAYLOAD_CHARS = 500_000;
+// Per-record bound passed to csv-parse: a single pathological cell/row can no
+// longer dominate parser memory even within an otherwise small payload.
+const MAX_CSV_RECORD_CHARS = 100_000;
 
 // POST /api/self-submissions — student submits self-selected volunteering
 router.post("/", authenticate, requireRole("STUDENT"), async (req: Request, res: Response) => {
@@ -108,10 +127,10 @@ router.post("/", authenticate, requireRole("STUDENT"), async (req: Request, res:
 });
 
 // POST /api/self-submissions/import — school admin bulk-imports pre-approved prior hours
-router.post("/import", authenticate, requireRole("SCHOOL_ADMIN", "TEACHER"), async (req: Request, res: Response) => {
+router.post("/import", authenticate, requireRole("SCHOOL_ADMIN", "TEACHER"), csvImportLimiter, async (req: Request, res: Response) => {
   try {
     const { csvData, dryRun } = z.object({
-      csvData: z.string().min(1),
+      csvData: z.string().min(1).max(MAX_CSV_PAYLOAD_CHARS),
       // §10 staged imports: preview imported/skipped counts and per-row
       // errors without creating any SelfSubmittedRequest row or the
       // BULK_HOURS_IMPORT audit log entry.
@@ -123,7 +142,7 @@ router.post("/import", authenticate, requireRole("SCHOOL_ADMIN", "TEACHER"), asy
 
     let records: Record<string, string>[];
     try {
-      records = parseCsv(csvData, { columns: true, skip_empty_lines: true, trim: true });
+      records = parseCsv(csvData, { columns: true, skip_empty_lines: true, trim: true, max_record_size: MAX_CSV_RECORD_CHARS });
     } catch {
       return res.status(400).json({ error: "Invalid CSV format" });
     }

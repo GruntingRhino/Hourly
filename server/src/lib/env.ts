@@ -21,6 +21,8 @@ const OPTIONAL = [
   "ALLOWED_ORIGINS",         // comma-separated list of allowed CORS origins
   "FIELD_ENCRYPTION_KEY",   // 64 hex chars — encrypts sensitive PII fields at rest
   "CRON_SECRET",            // shared secret for scheduled internal jobs (e.g. Vercel cron)
+  "ATTENDANCE_QR_SECRET",   // HMAC secret for session attendance QR tokens
+  "SUPERVISOR_VERIFICATION_SECRET", // HMAC secret for guest supervisor links
   "APP_ENV",                // "production" | "development" — set explicitly per Vercel project
   "DEV_DATABASE_URL",       // explicit development-only database URL; overrides DATABASE_URL when APP_ENV=development
   "ALLOW_SHARED_DEV_DATABASE", // set true only if you intentionally want dev to use a shared remote database
@@ -127,6 +129,11 @@ function validateEnv(): Record<RequiredEnv, string> & Partial<Record<OptionalEnv
 
     if (!process.env.CRON_SECRET) {
       console.error("❌ CRON_SECRET is required in production to secure internal scheduled endpoints.");
+      process.exit(1);
+    }
+
+    if (!process.env.ATTENDANCE_QR_SECRET || !process.env.SUPERVISOR_VERIFICATION_SECRET) {
+      console.error("❌ Attendance QR and supervisor verification secrets are required in production.");
       process.exit(1);
     }
 

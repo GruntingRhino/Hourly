@@ -1,0 +1,67 @@
+{
+  "method": "pattern scan over 678 files / 692660 lines / 201364098 bytes; triage by structure only, values never displayed",
+  "secret_value_findings": {
+    "private-key-block": 0,
+    "aws-access-key": 0,
+    "github-token": 0,
+    "slack-token": 0,
+    "stripe-live-key": 0,
+    "env-style-quoted-assignment": 0,
+    "resend-key_NEEDS-REVIEW": {
+      "count": 3,
+      "disposition": "false positives: 2 are migration-path substrings in manifest entries 21/22, 1 is a 31-char fixture fragment in a non-email Pro-grant test (shorter than production Resend key format); no email/send context on that line"
+    },
+    "stripe-webhook-secret_NEEDS-REVIEW": {
+      "count": 2,
+      "disposition": ".env.example:63 and server/.env.example:52 are whsec_replace* format placeholders (regex stops at underscore); reclassified placeholder"
+    },
+    "generic-env-secret-assign_NEEDS-REVIEW": {
+      "count": 180,
+      "disposition": "157 code constructs (const/await/process.env/crypto/jwt), 6 strict-equality comparisons, 17 JSX/hook/markdown/test-expression lines; 0 env-style ALL_CAPS quoted assignments"
+    }
+  },
+  "pii_findings": {
+    "total_hours.csv": {
+      "path": "total_hours.csv",
+      "lines": "0: student-name-like header; 1: non-placeholder data row",
+      "disposition": "EXCLUDED from publication list; flagged for owner review as possible real student PII; original preserved untouched"
+    },
+    "service_hours.csv": {
+      "disposition": "no name/email/phone/student headers; kept publishable"
+    },
+    "auth.ts operational emails": {
+      "lines": [
+        587,
+        839
+      ],
+      "disposition": ":839 approval-notification recipient (real mailbox, pre-existing); :587 literal inside POST /signup verification-email block; owner must confirm both intended before publication; not student PII"
+    },
+    "seed-playwright personal-domain": {
+      "count": 26,
+      "disposition": "all fixture-shaped local parts; synthetic seed data"
+    },
+    "phone-with-context scoped": {
+      "count": 8,
+      "disposition": "all carry fictional markers (555/test/fake); seed/spec/UI placeholder data"
+    },
+    "phone-pattern bulk": {
+      "count": 257758,
+      "disposition": "non-specific 10-digit-run detector; concentrated in public school-directory CSVs (institutional numbers) and numeric IDs/hashes; not student PII"
+    },
+    "email other-domain": {
+      "disposition": "dominated by synthetic/institutional/test-mail domains (student.edu, example.test, greenearth.org, lincoln.edu, mailinator); jud.state.ma.us and dadeschools.net appear only in public directory/legal sources"
+    }
+  },
+  "coverage": {
+    "files_scanned": 678,
+    "binary_skipped_filenames_only": 57,
+    "unreadable": 0
+  },
+  "excluded_from_publication": [
+    "total_hours.csv"
+  ],
+  "uncertain_residual": [
+    "server/tests/schoolBeneficiaryPolicyArchitecture.test.ts:66 re_-fragment (assessed fixture, owner spot-check advised)",
+    "server/src/routes/auth.ts:587 literal purpose (owner disposition advised)"
+  ]
+}

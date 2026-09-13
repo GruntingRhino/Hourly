@@ -2317,7 +2317,11 @@ router.get("/:id/export", authenticate, requireRole("SCHOOL_ADMIN", "TEACHER"), 
   }
 });
 
-// DELETE /api/schools/:id/students/:studentId — remove a student's account and data (SCHOOL_ADMIN only, FERPA right-to-delete)
+// DELETE /api/schools/:id/students/:studentId — anonymize a student's identity (SCHOOL_ADMIN only)
+// Only the User identity row is anonymized (name, contact, credentials, cohort
+// links). Hour, verification, message, and audit records are intentionally
+// retained pending the school-approved retention schedule, so the response
+// names the retained categories instead of claiming removal.
 router.delete("/:id/students/:studentId", authenticate, requireRole("SCHOOL_ADMIN"), async (req: Request, res: Response) => {
   try {
     const actor = await prisma.user.findUnique({ where: { id: req.user!.userId } });
@@ -2373,7 +2377,16 @@ router.delete("/:id/students/:studentId", authenticate, requireRole("SCHOOL_ADMI
       data: { isActive: false },
     });
 
-    res.json({ message: "Student data removed" });
+    res.json({
+      message: "Student identity anonymized; hour/audit records retained pending the school-approved retention schedule",
+      retained: [
+        "hours",
+        "verification_evidence",
+        "messages",
+        "audit_trail",
+        "preferences",
+      ],
+    });
   } catch (err) {
     console.error("Delete student error:", err);
     res.status(500).json({ error: "Internal server error" });

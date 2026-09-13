@@ -1,0 +1,188 @@
+{
+  "version": 3,
+  "retrieval_date": "2026-09-05",
+  "sources": [
+    {
+      "id": 1,
+      "url": "https://studentprivacy.ed.gov/ferpa",
+      "title": "U.S. Department of Education, FERPA 34 CFR Part 99",
+      "accessed": "2026-09-05",
+      "quotes": [
+        "direct control of the agency or institution with respect to the use and maintenance of education records",
+        "An educational agency or institution must use reasonable methods to ensure that school officials obtain access to only those education records in which they have legitimate educational interests."
+      ]
+    },
+    {
+      "id": 2,
+      "url": "https://www.ftc.gov/legal-library/browse/rules/childrens-online-privacy-protection-rule-coppa",
+      "title": "FTC, COPPA Rule",
+      "accessed": "2026-09-05",
+      "quotes": [
+        "The COPPA Rule was amended on April 22, 2025.",
+        "Retain personal information collected online from a child for only as long as is necessary to fulfill the purpose for which it was collected and delete the information using reasonable measures to protect against its unauthorized access or use;"
+      ]
+    },
+    {
+      "id": 3,
+      "url": "https://www.ftc.gov/business-guidance/resources/complying-coppa-frequently-asked-questions",
+      "title": "FTC, COPPA FAQ",
+      "accessed": "2026-09-05",
+      "quotes": [
+        "The primary goal of COPPA is to place parents in control over what information is collected from their young children online."
+      ]
+    },
+    {
+      "id": 4,
+      "url": "https://www.federalregister.gov/documents/2025/04/22/2025-05904/childrens-online-privacy-protection-rule",
+      "title": "Federal Register, COPPA Rule amendment notice",
+      "accessed": "2026-09-05",
+      "quotes": [
+        "The amended Rule is effective June 23, 2025.",
+        "Compliance date: Except with respect to Sec.  312.11(d)(1), (d)(4), and (g), regulated entities have until April 22, 2026 to comply."
+      ]
+    },
+    {
+      "id": 5,
+      "url": "https://www.ftc.gov/legal-library/browse/rules/childrens-online-privacy-protection-rule",
+      "title": "FTC COPPA Rule duplicate canonical page",
+      "accessed": "2026-09-05",
+      "quotes": []
+    },
+    {
+      "id": 6,
+      "url": "https://www.ecfr.gov/current/title-34/subtitle-A/part-99/subpart-D/section-99.31",
+      "title": "eCFR 34 CFR 99.31",
+      "accessed": "2026-09-05",
+      "quotes": []
+    },
+    {
+      "id": 7,
+      "url": "https://www.ecfr.gov/current/title-34/subtitle-A/part-99/subpart-D/section-99.33",
+      "title": "eCFR 34 CFR 99.33",
+      "accessed": "2026-09-05",
+      "quotes": []
+    },
+    {
+      "id": 8,
+      "url": "https://www.ecfr.gov/current/title-34/subtitle-A/part-99/subpart-C/section-99.20",
+      "title": "eCFR 34 CFR 99.20",
+      "accessed": "2026-09-05",
+      "quotes": []
+    },
+    {
+      "id": 9,
+      "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXII/Chapter71/Section34H",
+      "title": "Massachusetts General Laws c.71 \u00a734H, parent access to public-school student records",
+      "accessed": "2026-09-05",
+      "quotes": [
+        "Each public elementary and secondary school shall provide student records, including, but not limited to, the following information, in a timely and appropriate manner to the parents of a child enrolled in the school if the parents are eligible for information under this section and request the information in the manner set forth in this section:"
+      ]
+    },
+    {
+      "id": 10,
+      "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXV/Chapter93H",
+      "title": "Massachusetts General Laws c.93H, security breaches",
+      "accessed": "2026-09-05",
+      "quotes": [
+        "Chapter 93H: SECURITY BREACHES",
+        "Section 3 Duty to report known security breach or unauthorized use of personal information"
+      ]
+    },
+    {
+      "id": 11,
+      "url": "https://www.mass.gov/regulations/201-CMR-1700-standards-for-the-protection-of-personal-information-of-residents-of-the-commonwealth",
+      "title": "Massachusetts 201 CMR 17.00, standards for protection of personal information",
+      "accessed": "2026-09-05",
+      "quotes": []
+    },
+    {
+      "id": 12,
+      "url": "https://www.doe.mass.edu/lawsregs/603cmr23.html",
+      "title": "Massachusetts DESE, 603 CMR 23.00 Student Records",
+      "accessed": "2026-09-05",
+      "quotes": [
+        "603 CMR 23.00 is promulgated by the Board of Education pursuant to its powers under M.G.L. c.71, \u00a7 34D which directs that \"the board of education shall adopt regulations relative to the maintenance of student records by the public elementary and secondary schools of the commonwealth,\" and under M.G.L. c. 71, \u00a7 34F which directs that \"the board of education shall adopt regulations relative to the retention, duplication and storage of records under the control of school committees, and except as otherwise required by law may authorize the periodic destruction of any such records at reasonable times.\""
+      ],
+      "retrieval_note": "Recovered official page; section-specific HTML and cleaned evidence saved under evidence/sources/; page states most recently amended January 27, 2026."
+    },
+    {
+      "id": 13,
+      "url": "https://www.doe.mass.edu/lawsregs/603cmr23.html?section=01",
+      "title": "Massachusetts DESE, 603 CMR 23.01 \u2014 Student Records",
+      "accessed": "2026-09-05",
+      "quotes": [
+        "603 CMR 23.00 is promulgated to insure parents' and students' rights of confidentiality, inspection, amendment, and destruction of student records and to assist local school systems in adhering to the law."
+      ]
+    },
+    {
+      "id": 14,
+      "url": "https://www.doe.mass.edu/lawsregs/603cmr23.html?section=03",
+      "title": "Massachusetts DESE, 603 CMR 23.03 \u2014 Student Records",
+      "accessed": "2026-09-05",
+      "quotes": [
+        "All information and data contained in or added to the student record shall be limited to information relevant to the educational needs of the student."
+      ]
+    },
+    {
+      "id": 15,
+      "url": "https://www.doe.mass.edu/lawsregs/603cmr23.html?section=05",
+      "title": "Massachusetts DESE, 603 CMR 23.05 \u2014 Student Records",
+      "accessed": "2026-09-05",
+      "quotes": [
+        "The principal and superintendent of schools shall insure that student records under their supervision are kept physically secure, that authorized school personnel are informed of the provisions of 603 CMR 23.00 and M.G.L. c. 71, \u00a7 34H and are educated as to the importance of information privacy and confidentiality; and that any computerized systems employed are electronically secure."
+      ]
+    },
+    {
+      "id": 16,
+      "url": "https://www.doe.mass.edu/lawsregs/603cmr23.html?section=06",
+      "title": "Massachusetts DESE, 603 CMR 23.06 \u2014 Student Records",
+      "accessed": "2026-09-05",
+      "quotes": [
+        "The student's transcript shall be maintained by the school department and may only be destroyed 60 years following his/her graduation, transfer, or withdrawal from the school system.",
+        "The temporary record of any student enrolled on or after the effective date of 603 CMR 23.00 shall be destroyed no later than seven years after the student transfers, graduates, or withdraws from the school system."
+      ]
+    },
+    {
+      "id": 17,
+      "url": "https://www.doe.mass.edu/lawsregs/603cmr23.html?section=07",
+      "title": "Massachusetts DESE, 603 CMR 23.07 \u2014 Student Records",
+      "accessed": "2026-09-05",
+      "quotes": [
+        "A log shall be kept as part of each student's record.",
+        "Access shall be provided as soon as practicable and within ten days after the initial request, except in the case of non-custodial parents as provided in 603 CMR 23.07 (5).",
+        "Except for the provisions of 603 CMR 23.07(4)(a) through 603 CMR 23.07(4)(h), no third party shall have access to information in or from a student record without the specific, informed written consent of the eligible student or the parent."
+      ]
+    },
+    {
+      "id": 18,
+      "url": "https://www.doe.mass.edu/lawsregs/603cmr23.html?section=08",
+      "title": "Massachusetts DESE, 603 CMR 23.08 \u2014 Student Records",
+      "accessed": "2026-09-05",
+      "quotes": [
+        "The eligible student or the parent shall have the right to request in writing deletion or amendment of any information contained in the student record, except for information which was inserted into that record by an Evaluation Team."
+      ]
+    },
+    {
+      "id": 19,
+      "url": "https://www.doe.mass.edu/lawsregs/603cmr23.html?section=10",
+      "title": "Massachusetts DESE, 603 CMR 23.010 \u2014 Student Records",
+      "accessed": "2026-09-05",
+      "quotes": [
+        "At least once during every school year, the school shall publish and distribute to students and their parents in their primary language a routine information letter informing them of the following:"
+      ]
+    }
+  ],
+  "evidence_files": {
+    "1": "sources/ferpa-reg-99-33.html (eCFR endpoint returned access-page content; no quote used)",
+    "9": "sources/mass-general-law-71-34h.html",
+    "10": "sources/mass-general-law-93h.html",
+    "11": "sources/mass-201-cmr-17.html",
+    "13": "sources/603cmr23-section-01.txt",
+    "14": "sources/603cmr23-section-03.txt",
+    "15": "sources/603cmr23-section-05.txt",
+    "16": "sources/603cmr23-section-06.txt",
+    "17": "sources/603cmr23-section-07.txt",
+    "18": "sources/603cmr23-section-08.txt",
+    "19": "sources/603cmr23-section-10.txt"
+  }
+}

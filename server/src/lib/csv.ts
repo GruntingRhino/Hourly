@@ -2,7 +2,7 @@
  * Safe CSV serialization.
  *
  * Every cell is quoted with embedded quotes doubled (RFC 4180), and cells that
- * begin with a formula trigger character (= + - @, tab, CR) are prefixed with
+ * begin with a formula trigger character (= + - @ |, tab, CR) are prefixed with
  * a single quote so spreadsheet apps render them as text instead of executing
  * them. User-controlled values (names, org titles) flow into exports opened by
  * school staff — without this an org named `=HYPERLINK(...)` becomes a live
@@ -11,7 +11,7 @@
 
 export function csvCell(value: string | number | null | undefined): string {
   let text = value == null ? "" : String(value);
-  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+  if (/^[=+\-@|\t\r]/.test(text)) text = `'${text}`;
   return `"${text.replace(/"/g, '""')}"`;
 }
 

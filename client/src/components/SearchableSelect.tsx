@@ -5,6 +5,10 @@ interface SearchableSelectProps {
   onChange: (value: string) => void;
   options: string[];
   placeholder?: string;
+  /** Accessible name for the input (falls back to `placeholder`). Also names the clear button. */
+  label?: string;
+  /** Input id (for associating an external visible `<label htmlFor>`). Generated when omitted. */
+  id?: string;
   className?: string;
   required?: boolean;
   disabled?: boolean;
@@ -18,6 +22,8 @@ export default function SearchableSelect({
   onChange,
   options,
   placeholder,
+  label,
+  id,
   className = "",
   required = false,
   disabled = false,
@@ -30,6 +36,11 @@ export default function SearchableSelect({
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const listboxId = useId();
+  const generatedInputId = useId();
+  const inputId = id ?? generatedInputId;
+  // REPORT F-07/F-09: the input previously exposed only `placeholder`, which
+  // fails the axe label rule and leaves screen readers without a name.
+  const accessibleName = label ?? placeholder;
 
   useEffect(() => {
     queueMicrotask(() => setQuery(value));
@@ -73,35 +84,43 @@ export default function SearchableSelect({
     setIsOpen(false);
   };
 
-  const handleBlur = () => {
-    window.setTimeout(() => {
-      if (!rootRef.current?.contains(document.activeElement)) {
-        if (allowCustomValue) {
-          const normalized = query.trim();
-          if (normalized !== value) {
-            onChange(normalized);
-          }
-          setQuery(normalized);
-        } else {
-          setQuery(value);
-        }
-        setIsOpen(false);
+  const handleBlur = (e: React.FocusEvent) => {
+    // REPORT F-07: resolve the old `setTimeout 0` blur race with a
+    // `relatedTarget` containment check — option/clear activations use
+    // `onMouseDown preventDefault`, so focus stays inside the root for real
+    // selections, while tabbing out closes and commits/resets.
+    if (e.relatedTarget && rootRef.current?.contains(e.relatedTarget as Node)) {
+      return;
+    }
+    if (allowCustomValue) {
+      const normalized = query.trim();
+      if (normalized !== value) {
+        onChange(normalized);
       }
-    }, 0);
+      setQuery(normalized);
+    } else {
+      setQuery(value);
+    }
+    setIsOpen(false);
   };
 
   return (
     <div ref={rootRef} className="relative" onBlur={handleBlur}>
       <input
         type="text"
+        id={inputId}
         value={query}
         placeholder={placeholder}
+        aria-label={accessibleName}
         required={required}
         disabled={disabled}
         role="combobox"
         aria-expanded={isOpen}
         aria-controls={listboxId}
         aria-autocomplete="list"
+        aria-activedescendant={
+          isOpen && filteredOptions.length > 0 ? `${listboxId}-option-${highlightedIndex}` : undefined
+        }
         onFocus={() => setIsOpen(true)}
         onChange={(e) => {
           const nextValue = e.target.value;
@@ -159,9 +178,9 @@ export default function SearchableSelect({
             setIsOpen(false);
           }}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-faint)] hover:text-[var(--text-sec)]"
-          aria-label="Clear selection"
+          aria-label={accessibleName ? `Clear ${accessibleName}` : "Clear selection"}
         >
-          ×
+          <span aria-hidden="true">×</span>
         </button>
       )}
       {isOpen && !disabled && (
@@ -175,20 +194,25 @@ export default function SearchableSelect({
               const isActive = index === highlightedIndex;
               const isSelected = option === value;
               return (
-                <button
+                // REPORT F-07: options are non-interactive `role="option"`
+                // rows (the input owns keyboard handling); the active row is
+                // exposed via `aria-activedescendant` on the input above.
+                // Mouse behavior (hover-highlight, mousedown keeps focus for
+                // the blur containment check, click commits) is unchanged.
+                <div
                   key={option}
-                  type="button"
                   role="option"
+                  id={`${listboxId}-option-${index}`}
                   aria-selected={isSelected}
                   onMouseDown={(e) => e.preventDefault()}
                   onMouseEnter={() => setHighlightedIndex(index)}
                   onClick={() => commitValue(option)}
-                  className={`block w-full px-3 py-2 text-left text-sm ${
+                  className={`block w-full px-3 py-2 text-left text-sm cursor-default ${
                     isActive ? "bg-[var(--in-bg)] text-[var(--action)]" : "text-[var(--text)]"
                   } ${isSelected ? "font-medium" : ""}`}
                 >
                   {option}
-                </button>
+                </div>
               );
             })
           ) : (

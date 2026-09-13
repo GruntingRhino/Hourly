@@ -1,0 +1,57 @@
+TAP version 13
+# ⚠️  Optional environment variables not set (some features may be disabled):
+#    - JWT_SECRET_PREVIOUS
+#    - RESEND_API_KEY
+#    - EMAIL_FROM
+#    - GOOGLE_CLIENT_ID
+#    - GOOGLE_CLIENT_SECRET
+#    - GOOGLE_CALLBACK_URL
+#    - APP_URL
+#    - CLIENT_URL
+#    - PORT
+#    - ALLOWED_ORIGINS
+#    - FIELD_ENCRYPTION_KEY
+#    - DEV_DATABASE_URL
+#    - CANVAS_CLIENT_ID
+#    - CANVAS_CLIENT_SECRET
+#    - CANVAS_CALLBACK_URL
+#    - CANVAS_ALLOWED_ORIGINS
+#    - CANVAS_ENABLE_MOCK
+#    - CANVAS_REQUEST_TIMEOUT_MS
+#    - CANVAS_PAGE_SIZE
+#    - GOOGLE_CLASSROOM_CLIENT_ID
+#    - GOOGLE_CLASSROOM_CLIENT_SECRET
+#    - GOOGLE_CLASSROOM_CALLBACK_URL
+#    - GOOGLE_CLASSROOM_ENABLE_MOCK
+#    - GOOGLE_CLASSROOM_REQUEST_TIMEOUT_MS
+#    - GOOGLE_CLASSROOM_PAGE_SIZE
+#    - UPSTASH_REDIS_REST_URL
+#    - UPSTASH_REDIS_REST_TOKEN
+# [RateLimit] Using in-memory bucket store. On Vercel serverless, rate limits reset on every cold start. Configure shared production rate limiting with PostgreSQL or Upstash.
+# [Auth] Dev impersonation routes disabled. Set ENABLE_IMPERSONATION=true to enable.
+# {"type":"request","requestId":"99e6310e-c48a-4b7a-b3a3-86e2fd09d84d","method":"POST","path":"/slots/cmtuy81g0000sbjjqisudh3ue/signup","status":201,"ms":58,"ip":"127.0.0.1","userId":"cmtuy81fd000cbjjq8lj2slbf"}
+# {"type":"request","requestId":"6d03f13d-1491-4568-a7e6-df20c7c38b02","method":"POST","path":"/slots/cmtuy81g0000sbjjqisudh3ue/signup","status":201,"ms":28,"ip":"127.0.0.1","userId":"cmtuy81fi000fbjjqu7pz6clq"}
+# {"type":"request","requestId":"bdcf3b67-f953-4a9e-96ca-db993e4d1c64","method":"POST","path":"/signups/cmtuy81il000ubjjqu4lucfrv/cancel","status":200,"ms":34,"ip":"127.0.0.1","userId":"cmtuy81fd000cbjjq8lj2slbf"}
+# {"type":"request","requestId":"44b052c5-42a7-4ff1-9f82-3d3c18201309","method":"POST","path":"/cmtuy81f00004bjjq6qi93tjy/opportunities/cmtuy81fx000qbjjq591r64qp/attendance","status":200,"ms":16,"ip":"127.0.0.1","userId":"cmtuy81fm000ibjjqr3fkxla6"}
+# {"type":"request","requestId":"f5b378ab-10e2-4ec0-a382-b4221d0d607c","method":"POST","path":"/signups/cmtuy81ju000ybjjq9g5wn40z/approve","status":200,"ms":24,"ip":"127.0.0.1","userId":"cmtuy81fm000ibjjqr3fkxla6"}
+# {"type":"request","requestId":"82383f9c-af17-4df8-a51e-a7756e372e71","method":"GET","path":"/student","status":200,"ms":34,"ip":"127.0.0.1","userId":"cmtuy81fi000fbjjqu7pz6clq"}
+# {"type":"request","requestId":"237d811b-a832-4938-afd5-74e9f17abea4","method":"POST","path":"/student/transcript","status":201,"ms":44,"ip":"127.0.0.1","userId":"cmtuy81fi000fbjjqu7pz6clq"}
+# {"type":"request","requestId":"924877be-2284-4bc8-905a-decf4c2284b7","method":"POST","path":"/transcripts/cmtuy81p5001gbjjqrhn9v4gi/certify","status":200,"ms":10,"ip":"127.0.0.1","userId":"cmtuy81f40006bjjqauomej0t"}
+# {"type":"request","requestId":"ab33d84b-753a-447f-87f0-626ff1ee7bfc","method":"GET","path":"/export/csv","status":200,"ms":16,"ip":"127.0.0.1","userId":"cmtuy81fi000fbjjqu7pz6clq"}
+# {"type":"request","requestId":"212403a4-bff6-45e6-a00b-d3fc874a3071","method":"GET","path":"/student","status":403,"ms":9,"ip":"127.0.0.1","userId":"cmtuy81fa000abjjqfsn321g4"}
+# {"type":"request","requestId":"a0995af2-acad-4db3-baa7-4f64b6638752","method":"GET","path":"/student","status":200,"ms":23,"ip":"127.0.0.1","userId":"cmtuy81f70008bjjqrs6rad13"}
+# Subtest: fake school pilot: roles, waitlist, attendance, approval, ledger, transcript, export, isolation
+ok 1 - fake school pilot: roles, waitlist, attendance, approval, ledger, transcript, export, isolation
+  ---
+  duration_ms: 514.286368
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1600.756583

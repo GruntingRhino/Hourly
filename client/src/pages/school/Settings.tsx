@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { api, getErrorMessage } from "../../lib/api";
+import { escapeCsvCell } from "../../lib/csv";
 import { CollapsibleList } from "../../components/CollapsibleList";
 import { OPPORTUNITY_CATEGORY_OPTIONS } from "../../lib/opportunityCategories";
 import { SchoolBilling } from "./SchoolBilling";
@@ -933,7 +934,7 @@ export default function SchoolSettings() {
           s.verificationStatus || s.status || "",
         ]),
       ];
-      const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+      const csv = rows.map((r) => r.map(escapeCsvCell).join(",")).join("\n");
       const blob = new Blob([csv], { type: "text/csv" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");

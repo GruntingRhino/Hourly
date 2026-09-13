@@ -1,0 +1,67 @@
+⚠️  Optional environment variables not set (some features may be disabled):
+   - JWT_SECRET_PREVIOUS
+   - RESEND_API_KEY
+   - EMAIL_FROM
+   - GOOGLE_CLIENT_ID
+   - GOOGLE_CLIENT_SECRET
+   - GOOGLE_CALLBACK_URL
+   - APP_URL
+   - CLIENT_URL
+   - PORT
+   - ALLOWED_ORIGINS
+   - FIELD_ENCRYPTION_KEY
+   - ATTENDANCE_QR_SECRET
+   - SUPERVISOR_VERIFICATION_SECRET
+   - DEV_DATABASE_URL
+   - CANVAS_CLIENT_ID
+   - CANVAS_CLIENT_SECRET
+   - CANVAS_CALLBACK_URL
+   - CANVAS_ALLOWED_ORIGINS
+   - CANVAS_ENABLE_MOCK
+   - CANVAS_REQUEST_TIMEOUT_MS
+   - CANVAS_PAGE_SIZE
+   - GOOGLE_CLASSROOM_CLIENT_ID
+   - GOOGLE_CLASSROOM_CLIENT_SECRET
+   - GOOGLE_CLASSROOM_CALLBACK_URL
+   - GOOGLE_CLASSROOM_ENABLE_MOCK
+   - GOOGLE_CLASSROOM_REQUEST_TIMEOUT_MS
+   - GOOGLE_CLASSROOM_PAGE_SIZE
+   - UPSTASH_REDIS_REST_URL
+   - UPSTASH_REDIS_REST_TOKEN
+[RateLimit] Using in-memory bucket store. On Vercel serverless, rate limits reset on every cold start. Configure shared production rate limiting with PostgreSQL or Upstash.
+[Auth] Dev impersonation routes disabled. Set ENABLE_IMPERSONATION=true to enable.
+{"type":"request","requestId":"ab8da44d-f42e-4ece-ad36-d7314fee9fe3","method":"POST","path":"/slots/cmtw20mn9000zbjekkksstjbl/signup","status":201,"ms":62,"ip":"127.0.0.1","userId":"cmtw20mm9000cbjekycgpplyy"}
+{"type":"request","requestId":"acb67d5a-d073-403d-963b-e5f92e7de79f","method":"POST","path":"/slots/cmtw20mn9000zbjekkksstjbl/signup","status":201,"ms":22,"ip":"127.0.0.1","userId":"cmtw20mme000fbjekn4fbiqp3"}
+{"type":"request","requestId":"25f0fea7-6114-41f8-b471-4758e38ca44d","method":"POST","path":"/signups/cmtw20mq00011bjekdbo8s6o7/cancel","status":200,"ms":36,"ip":"127.0.0.1","userId":"cmtw20mm9000cbjekycgpplyy"}
+{"type":"request","requestId":"12859357-fb94-49ec-93cb-09ea55ccac75","method":"POST","path":"/cmtw20mlw0004bjekqffrozab/opportunities/cmtw20mn6000xbjekvitw6b4i/attendance","status":200,"ms":29,"ip":"127.0.0.1","userId":"cmtw20mmj000ibjekmnzff4tj"}
+{"type":"request","requestId":"b845e1f0-4ab9-4cc7-8d1d-4d4860d6aa4b","method":"POST","path":"/signups/cmtw20mr20015bjekstrj3u9p/approve","status":200,"ms":30,"ip":"127.0.0.1","userId":"cmtw20mmj000ibjekmnzff4tj"}
+{"type":"request","requestId":"c74348c7-042f-4201-859d-b8a5ee59744c","method":"GET","path":"/student","status":200,"ms":36,"ip":"127.0.0.1","userId":"cmtw20mme000fbjekn4fbiqp3"}
+{"type":"request","requestId":"2194160f-4362-4752-80f1-3f6fa2117f05","method":"POST","path":"/student/transcript","status":201,"ms":37,"ip":"127.0.0.1","userId":"cmtw20mme000fbjekn4fbiqp3"}
+{"type":"request","requestId":"4f86b276-e9bb-496a-937a-ec6fa280dd9e","method":"POST","path":"/transcripts/cmtw20mwe001nbjekyp9kzek8/certify","status":200,"ms":10,"ip":"127.0.0.1","userId":"cmtw20mlz0006bjeko46hmmb9"}
+{"type":"request","requestId":"50099785-b095-4e23-a4ed-d6e124dc7f59","method":"GET","path":"/export/csv","status":200,"ms":14,"ip":"127.0.0.1","userId":"cmtw20mme000fbjekn4fbiqp3"}
+{"type":"request","requestId":"f3eca6bf-9b3e-482d-ad0f-cc61b5ca8088","method":"GET","path":"/student","status":403,"ms":10,"ip":"127.0.0.1","userId":"cmtw20mm6000abjekbyv6dv2o"}
+{"type":"request","requestId":"ba4893d1-b97e-45cb-b32e-cc98d0ef47b1","method":"GET","path":"/student","status":200,"ms":25,"ip":"127.0.0.1","userId":"cmtw20mm30008bjekoei6w4yh"}
+{"type":"request","requestId":"0d30882f-13e6-481b-99b8-ac23d69084dc","method":"POST","path":"/signups/cmtw20mr20015bjekstrj3u9p/supervisor-verification","status":201,"ms":12,"ip":"127.0.0.1","userId":"cmtw20mmj000ibjekmnzff4tj"}
+{"type":"request","requestId":"3aef5edb-cce5-4c50-8c17-cd479e41541b","method":"POST","path":"/supervisor-verification/consume","status":200,"ms":12,"ip":"127.0.0.1","userId":null}
+{"type":"request","requestId":"c74b3cf6-ef70-466d-ae39-220678fa386f","method":"POST","path":"/supervisor-verification/consume","status":400,"ms":5,"ip":"127.0.0.1","userId":null}
+{"type":"request","requestId":"89de5901-50dc-4092-94b8-5e69ebd3bb83","method":"POST","path":"/signups/cmtw20mr20015bjekstrj3u9p/supervisor-verification","status":403,"ms":11,"ip":"127.0.0.1","userId":"cmtw20mm6000abjekbyv6dv2o"}
+{"type":"request","requestId":"04caed38-4b6d-4eb2-86ed-8c4e92bef922","method":"POST","path":"/signups/cmtw20mr20015bjekstrj3u9p/supervisor-verification","status":201,"ms":11,"ip":"127.0.0.1","userId":"cmtw20mmj000ibjekmnzff4tj"}
+{"type":"request","requestId":"0f38282b-cca8-4969-ad62-801667bbe1aa","method":"POST","path":"/supervisor-verification/consume","status":400,"ms":1,"ip":"127.0.0.1","userId":null}
+{"type":"request","requestId":"b721dc90-db81-43c3-a3c3-34f70b54ba9f","method":"POST","path":"/supervisor-verification/consume","status":400,"ms":3,"ip":"127.0.0.1","userId":null}
+{"type":"request","requestId":"f9784560-5cfc-45ed-a343-5994cdc0514e","method":"POST","path":"/cmtw20mn3000vbjekdojwzojt/qr-token","status":201,"ms":11,"ip":"127.0.0.1","userId":"cmtw20mmy000rbjekwejb16rg"}
+{"type":"request","requestId":"7feb01b4-6844-4c82-81a2-5c982e7f8260","method":"POST","path":"/cmtw20mn3000vbjekdojwzojt/qr-checkin","status":200,"ms":15,"ip":"127.0.0.1","userId":"cmtw20mm9000cbjekycgpplyy"}
+{"type":"request","requestId":"062b92c2-f0c9-47b4-8d95-561fa3272772","method":"POST","path":"/cmtw20mn3000vbjekdojwzojt/qr-checkin","status":409,"ms":5,"ip":"127.0.0.1","userId":"cmtw20mm9000cbjekycgpplyy"}
+{"type":"request","requestId":"cd53a6de-d97c-4d5f-95fc-657df97152c0","method":"POST","path":"/cmtw20mn3000vbjekdojwzojt/qr-checkin","status":403,"ms":4,"ip":"127.0.0.1","userId":"cmtw20mme000fbjekn4fbiqp3"}
+{"type":"request","requestId":"5ce6aa14-8595-4593-9f2c-297c3b642a31","method":"POST","path":"/cmtw20mn3000vbjekdojwzojt/qr-token","status":403,"ms":6,"ip":"127.0.0.1","userId":"cmtw20mm6000abjekbyv6dv2o"}
+{"type":"request","requestId":"614b6bf4-be61-476b-9a20-047befaac75f","method":"POST","path":"/cmtw20mn3000vbjekdojwzojt/qr-checkin","status":400,"ms":2,"ip":"127.0.0.1","userId":"cmtw20mm9000cbjekycgpplyy"}
+{"type":"request","requestId":"7ffbb8be-7590-4fb1-9215-68330e0174df","method":"POST","path":"/cmtw20n25001zbjeklnd51jpe/qr-token","status":201,"ms":9,"ip":"127.0.0.1","userId":"cmtw20mmy000rbjekwejb16rg"}
+{"type":"request","requestId":"8d3a2c61-85b6-4082-8d8c-9dbc2f02aef8","method":"POST","path":"/cmtw20n25001zbjeklnd51jpe/qr-checkin","status":400,"ms":6,"ip":"127.0.0.1","userId":"cmtw20mme000fbjekn4fbiqp3"}
+✔ fake school pilot: roles, waitlist, attendance, approval, ledger, transcript, export, isolation (709.958432ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1822.455345

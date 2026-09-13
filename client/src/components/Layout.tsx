@@ -204,6 +204,7 @@ function getNavItems(role: string) {
         { path: "/cohorts", label: "Cohorts" },
         { path: "/beneficiaries", label: "Partners" },
         { path: "/opportunities", label: "Opportunities" },
+        { path: "/attendance-qr", label: "Attendance QR" },
         { path: "/launch", label: "Launch" },
         { path: "/settings", label: "Settings" },
         ...((import.meta.env.DEV === true || import.meta.env.VITE_APP_ENV === "development") && role === "SCHOOL_ADMIN"
@@ -214,6 +215,7 @@ function getNavItems(role: string) {
       return [
         { path: "/dashboard", label: "Dashboard" },
         { path: "/cohorts", label: "Cohorts" },
+        { path: "/attendance-qr", label: "Attendance QR" },
         { path: "/settings", label: "Settings" },
       ];
     case "BENEFICIARY_ADMIN":

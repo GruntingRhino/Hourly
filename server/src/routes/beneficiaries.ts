@@ -41,6 +41,7 @@ import { shouldAutoPromoteWaitlist } from "../lib/waitlistPromotionPolicy";
 import { slotDateTime, computeSlotTimestamps } from "../lib/icsGenerator";
 import { recordServiceHourLedgerEntry } from "../lib/serviceHourLedger";
 import { parseReminderConfigInput, parseStoredReminders } from "../lib/reminderConfigPolicy";
+import { createSupervisorVerificationToken, hashSupervisorVerificationToken, parseSupervisorVerificationToken } from "../lib/supervisorVerification";
 
 const schoolBeneficiaryApprovalStatusEnum = z.enum(["PENDING", "APPROVED", "REJECTED", "BLOCKED"]);
 const beneficiarySignupVerificationStatusEnum = z.enum(["PENDING", "APPROVED", "REJECTED"]);
@@ -165,6 +166,22 @@ async function isBeneficiaryPiiEnabled(beneficiaryId: string): Promise<boolean> 
   return approvals.some((a) => a.school.ferpaBeneficiaryPiiEnabled);
 }
 
+// 10 bulk CSV imports per staff member per hour — each call synchronously
+// parses and validates up to 500 rows, so unbounded bursts are a CPU/memory
+// concern even with per-payload size caps below.
+const beneficiaryCsvImportLimiter = createHybridRateLimit({
+  namespace: "csv-import",
+  windowMs: 60 * 60 * 1000,
+  maxPerIp: 30,
+  maxPerUser: 10,
+});
+
+// Pre-parse bound on the raw CSV payload (rejects oversized bodies before the
+// synchronous csv-parse call) and per-record bound for the parser itself, so
+// a single pathological cell/row cannot dominate parser memory.
+const MAX_CSV_PAYLOAD_CHARS = 500_000;
+const MAX_CSV_RECORD_CHARS = 100_000;
+
 // 10 invitations per school admin/recipient pair per hour — prevents inbox-bombing a beneficiary contact
 const beneficiaryInviteLimiter = createHybridRateLimit({
   namespace: "ben-invite",
@@ -175,6 +192,44 @@ const beneficiaryInviteLimiter = createHybridRateLimit({
 });
 
 const router = Router();
+
+// Issue a scoped, hashed guest supervisor link. The guest can confirm attendance
+// but cannot approve ledger hours or bypass student eligibility/tenant policy.
+router.post("/signups/:signupId/supervisor-verification", authenticate, requireRole("BENEFICIARY_ADMIN", "SCHOOL_ADMIN"), async (req: Request, res: Response) => {
+  try {
+    const { supervisorEmail } = z.object({ supervisorEmail: z.string().email().transform((v) => v.trim().toLowerCase()) }).parse(req.body);
+    const signup = await prisma.beneficiarySignup.findUnique({ where: { id: req.params.signupId }, include: { slot: { include: { opportunity: true } }, school: { select: { id: true, domain: true } } } });
+    if (!signup) return res.status(404).json({ error: "Signup not found" });
+    if (!await canManageBeneficiary(req.user!.userId, signup.slot.opportunity.beneficiaryId)) return res.status(403).json({ error: "Not your beneficiary's signup" });
+    if (!signup.schoolId || !signup.school?.domain) return res.status(400).json({ error: "Signup has no school authorization domain" });
+    if (signup.status !== "CONFIRMED") return res.status(400).json({ error: "Only confirmed signups can be verified" });
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const existing = await prisma.supervisorVerification.findUnique({ where: { signupId: signup.id }, select: { id: true } });
+    const verificationId = existing?.id ?? crypto.randomUUID();
+    const token = createSupervisorVerificationToken({ verificationId, serviceRecordId: signup.id, supervisorEmail, expiresAt, secret: process.env.SUPERVISOR_VERIFICATION_SECRET || "" });
+    await prisma.supervisorVerification.upsert({ where: { signupId: signup.id }, update: { schoolId: signup.schoolId, supervisorEmail, tokenHash: hashSupervisorVerificationToken(token), expiresAt, usedAt: null }, create: { id: verificationId, signupId: signup.id, schoolId: signup.schoolId, supervisorEmail, tokenHash: hashSupervisorVerificationToken(token), expiresAt } });
+    return res.status(201).json({ verificationUrl: `${CLIENT_URL}/supervisor-verify#token=${encodeURIComponent(token)}`, expiresAt });
+  } catch (err) { if (err instanceof z.ZodError) return res.status(400).json({ error: "Validation failed", details: err.errors }); console.error("Issue supervisor verification error:", err); return res.status(500).json({ error: "Internal server error" }); }
+});
+
+// Public guest consume; the actual one-time claim is a conditional DB update.
+router.post("/supervisor-verification/consume", createHybridRateLimit({ namespace: "supervisor-verify", windowMs: 15 * 60 * 1000, maxPerIp: 20, maxPerUser: 20 }), async (req: Request, res: Response) => {
+  try {
+    const { token, supervisorEmail } = z.object({ token: z.string().min(1).max(4096), supervisorEmail: z.string().email().transform((v) => v.trim().toLowerCase()) }).parse(req.body);
+    const payload = parseSupervisorVerificationToken(token, process.env.SUPERVISOR_VERIFICATION_SECRET || "");
+    const record = await prisma.supervisorVerification.findUnique({ where: { id: payload.verificationId }, include: { signup: { include: { slot: { include: { opportunity: true } } } }, school: { select: { domain: true } } } });
+    if (!record || record.tokenHash !== hashSupervisorVerificationToken(token) || record.signupId !== payload.serviceRecordId || record.expiresAt <= new Date() || record.usedAt || record.supervisorEmail !== supervisorEmail || payload.supervisorEmail !== supervisorEmail) return res.status(400).json({ error: "Invalid or expired verification link" });
+    if (!record.school.domain || supervisorEmail.split("@")[1]?.toLowerCase() !== record.school.domain.toLowerCase()) return res.status(403).json({ error: "Supervisor email is not authorized for this school" });
+    const now = new Date();
+    await runSerializableTransaction(async (tx) => {
+      const claimed = await tx.supervisorVerification.updateMany({ where: { id: record.id, usedAt: null }, data: { usedAt: now } });
+      if (claimed.count !== 1) throw new Error("VERIFICATION_ALREADY_USED");
+      await tx.beneficiarySignup.update({ where: { id: record.signupId }, data: { attendance: "ATTENDED", checkedIn: true, checkedInAt: now } });
+      await tx.beneficiaryAuditLog.create({ data: { action: "SUPERVISOR_VERIFY", actorId: record.signup.studentId, signupId: record.signupId, details: JSON.stringify({ verificationId: record.id, supervisorDomain: record.school.domain }) } });
+    });
+    return res.json({ verified: true, signupId: record.signupId });
+  } catch (err) { if (err instanceof z.ZodError) return res.status(400).json({ error: "Validation failed", details: err.errors }); if (err instanceof Error && err.message === "VERIFICATION_ALREADY_USED") return res.status(409).json({ error: "Verification link already used" }); if (err instanceof Error && /Invalid|Expired/.test(err.message)) return res.status(400).json({ error: "Invalid or expired verification link" }); console.error("Consume supervisor verification error:", err); return res.status(500).json({ error: "Internal server error" }); }
+});
 
 function getSlotStartAt(slotDate: Date, startTime: string): Date {
   const [hours, minutes] = startTime.split(":").map(Number);
@@ -358,14 +413,44 @@ async function cancelBeneficiarySlot(
     };
   }
 
+  // Slot removal must not wipe verification/audit evidence (the opportunity
+  // delete nearby soft-cancels for the same reason). BeneficiarySignup rows
+  // cannot outlive their slot (required slotId FK, and no status column on
+  // BeneficiaryTimeSlot to soft-cancel against), so each doomed signup is
+  // snapshotted into a detached SLOT_CANCELLED tombstone row and the
+  // signup's existing audit rows are detached (signupId nulled, never
+  // deleted) before the signup + slot rows are removed.
   await runSerializableTransaction(async (tx) => {
     if (slot.signups.length > 0) {
       const signupIds = slot.signups.map((signup) => signup.id);
-      await tx.beneficiaryAuditLog.deleteMany({
+      const doomed = await tx.beneficiarySignup.findMany({
+        where: { id: { in: signupIds } },
+      });
+      await tx.beneficiaryAuditLog.createMany({
+        data: doomed.map((signup) => ({
+          action: "SLOT_CANCELLED",
+          actorId: actorUserId,
+          signupId: null,
+          details: JSON.stringify({
+            tombstone: "slot-cancelled",
+            cancelledSignupId: signup.id,
+            studentId: signup.studentId,
+            slotId,
+            opportunityId: slot.opportunityId,
+            priorStatus: signup.status,
+            verificationStatus: signup.verificationStatus,
+            totalHours: signup.totalHours,
+            verifiedBy: signup.verifiedBy,
+            verifiedAt: signup.verifiedAt,
+          }),
+        })),
+      });
+      await tx.beneficiaryAuditLog.updateMany({
         where: { signupId: { in: signupIds } },
+        data: { signupId: null },
       });
       await tx.beneficiarySignup.deleteMany({
-        where: { id: { in: slot.signups.map((signup) => signup.id) } },
+        where: { id: { in: signupIds } },
       });
     }
 
@@ -1078,10 +1163,10 @@ router.get("/available-slots", authenticate, requireRole("STUDENT"), async (req:
 });
 
 // POST /api/beneficiaries/import-csv — bulk import community partners
-router.post("/import-csv", authenticate, requireRole("SCHOOL_ADMIN"), async (req: Request, res: Response) => {
+router.post("/import-csv", authenticate, requireRole("SCHOOL_ADMIN"), beneficiaryCsvImportLimiter, async (req: Request, res: Response) => {
   try {
     const { csvData, dryRun } = z.object({
-      csvData: z.string().min(1),
+      csvData: z.string().min(1).max(MAX_CSV_PAYLOAD_CHARS),
       // §10 staged imports: preview added/failed counts and per-row errors
       // without creating any Beneficiary or SchoolBeneficiaryApproval row.
       dryRun: z.boolean().optional().default(false),
@@ -1091,7 +1176,7 @@ router.post("/import-csv", authenticate, requireRole("SCHOOL_ADMIN"), async (req
 
     let records: any[];
     try {
-      records = parse(csvData, { columns: true, skip_empty_lines: true, trim: true });
+      records = parse(csvData, { columns: true, skip_empty_lines: true, trim: true, max_record_size: MAX_CSV_RECORD_CHARS });
     } catch {
       return res.status(400).json({ error: "Invalid CSV format" });
     }
@@ -2715,7 +2800,16 @@ router.get("/:id/signups", authenticate, requireRole("BENEFICIARY_ADMIN", "SCHOO
     });
 
     const studentIds = [...new Set(signups.map((signup) => signup.studentId))];
-    const students = studentIds.length
+    // FERPA default-deny: beneficiary admins see real student names only when
+    // at least one APPROVED school linked this beneficiary with
+    // ferpaBeneficiaryPiiEnabled. School staff keep real names (they already
+    // hold the same PII via cohort/school reads). When denied, withhold the
+    // joinable studentId entirely (omit, not null) and return stable
+    // pseudonyms instead.
+    const piiEnabled =
+      req.user!.role !== "BENEFICIARY_ADMIN" ||
+      (await isBeneficiaryPiiEnabled(req.params.id));
+    const students = studentIds.length && piiEnabled
       ? await prisma.user.findMany({
           where: { id: { in: studentIds } },
           select: { id: true, name: true },
@@ -2734,10 +2828,18 @@ router.get("/:id/signups", authenticate, requireRole("BENEFICIARY_ADMIN", "SCHOO
       details: { studentCount: signups.length, statusFilter: statusFilter ?? "all" },
     });
 
-    const result = signups.map((s) => ({
-      ...s,
-      student: { id: s.studentId, label: studentMap.get(s.studentId) ?? "Unknown student" },
-    }));
+    const result = piiEnabled
+      ? signups.map((s) => ({
+          ...s,
+          student: { id: s.studentId, label: studentMap.get(s.studentId) ?? "Unknown student" },
+        }))
+      : signups.map((s) => {
+          const { studentId: _withheldJoinKey, ...rest } = s;
+          return {
+            ...rest,
+            student: { label: pseudonymousStudentLabel(s.studentId) },
+          };
+        });
 
     res.json(result);
   } catch (err) {
@@ -3931,26 +4033,52 @@ router.post("/signups/:signupId/no-show", authenticate, requireRole("BENEFICIARY
 // ── Beneficiary administrator management ──────────────────────────────────
 // Returns the minimum data required for a front-desk attendance checklist.
 router.get("/:id/opportunities/:oppId/attendance-checklist", authenticate, requireRole("BENEFICIARY_ADMIN"), async (req, res) => {
-  const actor = await prisma.user.findUnique({ where: { id: req.user!.userId } });
-  if (actor?.beneficiaryId !== req.params.id) return res.status(403).json({ error: "Forbidden" });
-  const slotId = typeof req.query.slotId === "string" ? req.query.slotId : "";
-  if (!slotId) return res.status(400).json({ error: "slotId is required" });
-  const slot = await prisma.beneficiaryTimeSlot.findFirst({
-    where: { id: slotId, opportunityId: req.params.oppId, opportunity: { beneficiaryId: req.params.id } },
-    select: { id: true, date: true, startTime: true, endTime: true, opportunity: { select: { id: true, title: true } } },
-  });
-  if (!slot) return res.status(404).json({ error: "Time slot not found" });
-  const records = await prisma.beneficiarySignup.findMany({
-    where: { slotId, status: { in: ["CONFIRMED", "NO_SHOW"] } },
-    select: { id: true, attendance: true, studentId: true },
-  });
-  const students = await prisma.user.findMany({ where: { id: { in: records.map((record) => record.studentId) } }, select: { id: true, name: true } });
-  const namesByStudentId = new Map(students.map((student) => [student.id, student.name]));
-  res.json({
-    opportunity: slot.opportunity,
-    slot: { id: slot.id, date: slot.date, startTime: slot.startTime, endTime: slot.endTime },
-    records: records.map(({ id, attendance, studentId }) => ({ signupId: id, name: namesByStudentId.get(studentId) ?? "Volunteer", attendance })).sort((a, b) => a.name.localeCompare(b.name)),
-  });
+  try {
+    const actor = await prisma.user.findUnique({ where: { id: req.user!.userId } });
+    if (actor?.beneficiaryId !== req.params.id) return res.status(403).json({ error: "Forbidden" });
+    const slotId = typeof req.query.slotId === "string" ? req.query.slotId : "";
+    if (!slotId) return res.status(400).json({ error: "slotId is required" });
+    const slot = await prisma.beneficiaryTimeSlot.findFirst({
+      where: { id: slotId, opportunityId: req.params.oppId, opportunity: { beneficiaryId: req.params.id } },
+      select: { id: true, date: true, startTime: true, endTime: true, opportunity: { select: { id: true, title: true } } },
+    });
+    if (!slot) return res.status(404).json({ error: "Time slot not found" });
+    const records = await prisma.beneficiarySignup.findMany({
+      where: { slotId, status: { in: ["CONFIRMED", "NO_SHOW"] } },
+      select: { id: true, attendance: true, studentId: true },
+    });
+    // FERPA default-deny (same gate as GET /:id/signups): without an APPROVED
+    // school's ferpaBeneficiaryPiiEnabled, return stable pseudonyms and skip
+    // the real-name lookup entirely so names never enter this response path.
+    const piiEnabled = await isBeneficiaryPiiEnabled(req.params.id);
+    const students = piiEnabled
+      ? await prisma.user.findMany({ where: { id: { in: records.map((record) => record.studentId) } }, select: { id: true, name: true } })
+      : [];
+    const namesByStudentId = new Map(students.map((student) => [student.id, student.name]));
+    // FERPA disclosure log, awaited so a failed audit write aborts the
+    // response instead of releasing the checklist with no trail.
+    await logDataAccess({
+      actorId: req.user!.userId,
+      action: "VIEW_ATTENDANCE_CHECKLIST",
+      targetType: "beneficiary",
+      targetId: req.params.id,
+      details: { opportunityId: req.params.oppId, slotId, recordCount: records.length },
+    });
+    res.json({
+      opportunity: slot.opportunity,
+      slot: { id: slot.id, date: slot.date, startTime: slot.startTime, endTime: slot.endTime },
+      records: records.map(({ id, attendance, studentId }) => ({
+        signupId: id,
+        name: piiEnabled
+          ? (namesByStudentId.get(studentId) ?? "Volunteer")
+          : pseudonymousStudentLabel(studentId),
+        attendance,
+      })).sort((a, b) => a.name.localeCompare(b.name)),
+    });
+  } catch (err) {
+    console.error("Attendance checklist error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 router.get("/:id/admins", authenticate, requireRole("BENEFICIARY_ADMIN"), async (req, res) => {

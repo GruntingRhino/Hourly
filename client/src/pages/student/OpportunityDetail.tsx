@@ -169,9 +169,9 @@ export default function OpportunityDetail() {
   };
 
   const handleQrCheckIn = async () => {
-    if (!qrToken.trim()) return;
+    if (!mySession || !qrToken.trim()) return;
     setActionLoading(true); setActionError("");
-    try { await api.post("/sessions/qr-checkin", { token: qrToken.trim() }); setQrToken(""); await loadData(); }
+    try { await api.post(`/sessions/${mySession.id}/qr-checkin`, { token: qrToken.trim() }); setQrToken(""); await loadData(); }
     catch (err: unknown) { setActionError(getErrorMessage(err, "Invalid or expired attendance QR token")); }
     finally { setActionLoading(false); }
   };

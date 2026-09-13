@@ -1,0 +1,59 @@
+⚠️  Optional environment variables not set (some features may be disabled):
+   - JWT_SECRET_PREVIOUS
+   - RESEND_API_KEY
+   - EMAIL_FROM
+   - GOOGLE_CLIENT_ID
+   - GOOGLE_CLIENT_SECRET
+   - GOOGLE_CALLBACK_URL
+   - APP_URL
+   - CLIENT_URL
+   - PORT
+   - ALLOWED_ORIGINS
+   - FIELD_ENCRYPTION_KEY
+   - ATTENDANCE_QR_SECRET
+   - SUPERVISOR_VERIFICATION_SECRET
+   - DEV_DATABASE_URL
+   - CANVAS_CLIENT_ID
+   - CANVAS_CLIENT_SECRET
+   - CANVAS_CALLBACK_URL
+   - CANVAS_ALLOWED_ORIGINS
+   - CANVAS_ENABLE_MOCK
+   - CANVAS_REQUEST_TIMEOUT_MS
+   - CANVAS_PAGE_SIZE
+   - GOOGLE_CLASSROOM_CLIENT_ID
+   - GOOGLE_CLASSROOM_CLIENT_SECRET
+   - GOOGLE_CLASSROOM_CALLBACK_URL
+   - GOOGLE_CLASSROOM_ENABLE_MOCK
+   - GOOGLE_CLASSROOM_REQUEST_TIMEOUT_MS
+   - GOOGLE_CLASSROOM_PAGE_SIZE
+   - UPSTASH_REDIS_REST_URL
+   - UPSTASH_REDIS_REST_TOKEN
+[RateLimit] Using in-memory bucket store. On Vercel serverless, rate limits reset on every cold start. Configure shared production rate limiting with PostgreSQL or Upstash.
+[Auth] Dev impersonation routes disabled. Set ENABLE_IMPERSONATION=true to enable.
+✖ fake school pilot: roles, waitlist, attendance, approval, ledger, transcript, export, isolation (4.837433ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1377.882921
+
+✖ failing tests:
+
+test at tests/syntheticSchoolPilot.integration.test.ts:2:2346
+✖ fake school pilot: roles, waitlist, attendance, approval, ledger, transcript, export, isolation (4.837433ms)
+  AssertionError [ERR_ASSERTION]: pilot must use loopback DB
+      at TestContext.<anonymous> (/home/opc/RTB/projects/goodhours/test-results/fresh-node24-20260910/server/tests/syntheticSchoolPilot.integration.test.ts:48:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

@@ -13,7 +13,7 @@ The script fails closed unless Vercel provides `VERCEL_ENV`, the exact project
 ID, a valid 40-character `VERCEL_GIT_COMMIT_SHA`, and `DATABASE_URL`. It does
 not pull, print, copy, or expose the database secret. Before any Prisma command,
 it verifies `scripts/vercel-production-migration-manifest.json`: the exact sorted
-70 migration SQL relative paths and SHA-256 hashes, plus the Prisma schema
+73 migration SQL relative paths and SHA-256 hashes, plus the Prisma schema
 SHA-256. Any added/removed/renamed/modified migration or schema fails closed.
 The six migrations added in the current release line contain no
 DROP/TRUNCATE/DELETE operations. It never runs `db push`, `migrate reset`, or a

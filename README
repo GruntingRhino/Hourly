@@ -7,13 +7,59 @@ Current status
 - Customer-facing flow work is focused on signup/login, browse, signup/waitlist, and attendance verification
 - Latest QA notes live in tests/qa-results.md
 
-Local development
-- Client: cd client && npm ci && npm run dev
-- Server: cd server && npm ci && npm run dev
+Local development (self-contained subshells; run in separate terminals)
+- (cd client && npm run dev)
+- (cd server && npm run dev)
+
+Fresh clone setup (verified 2026-09-10 on Node v24.21.0, loopback disposable Postgres)
+
+Prerequisites
+- Node 24 (`node --version` must report v24.x; see `.nvmrc`) and npm 10+.
+- A container runtime (`podman` or `docker`) for the disposable test/dev database.
+  The server test suite starts it automatically (see `server/scripts/ensure-test-db.sh`).
+
+Install (root first for shared tooling; every line is a self-contained subshell,
+safe to paste sequentially)
+- npm ci
+- (cd server && npm ci)
+- (cd client && npm ci)
+
+Configure
+- No manual secrets are needed for local testing: the tracked `server/.env.test`
+  points at the disposable loopback database (`127.0.0.1:5433/goodhours_test`) and
+  carries dummy-only credentials. Real environment variables always take precedence
+  over that file when set, and CI sets its own `DATABASE_URL` instead.
+- For local development against your own database, copy `server/.env.example` to
+  `server/.env` and fill in real values there (never commit that file).
+
+Verify (each line is a self-contained subshell, safe to paste sequentially)
+- node --version   # must report v24.x (see .nvmrc)
+- (cd server && node --env-file=.env.test node_modules/prisma/build/index.js validate --schema=prisma/schema.prisma)
+  # loads the tracked dummy-only env file; no manual secrets needed
+- (unset DATABASE_URL; cd server && npm test)
+  # drops any inherited DATABASE_URL so the tracked loopback dummy applies.
+  # `pretest` runs two harness scripts BEFORE any test process boots: it starts the
+  # disposable DB if needed (`scripts/ensure-test-db.sh`), then fail-closed validates
+  # every inherited database target and mode flag (`scripts/ensure-safe-test-target.sh`
+  # refuses non-loopback DATABASE_URL/DEV_DATABASE_URL/RATE_LIMIT_TEST_DATABASE_URL
+  # and any production APP_ENV/NODE_ENV/VERCEL_ENV). This pretest gate — not the pilot
+  # test's own guard (which covers only its file, since node --test runs files
+  # concurrently) — is what protects every concurrently running test. Server env
+  # validation additionally refuses remote shared databases in development
+  # (`server/src/lib/env.ts`).
+  # To replay the refusal proof with a deliberately non-loopback dummy target
+  # (`.invalid` never resolves, so refusal precedes any connection):
+  # (cd server && DATABASE_URL='postgresql://user:pass@db.non-loopback.invalid:5432/prod' node --env-file-if-exists=.env.test --import tsx --test tests/syntheticSchoolPilot.integration.test.ts)
+  # expected: non-zero exit with "pilot must use loopback DB".
+- (cd server && npm run build)
+- (cd client && npm run build)
+
+Safety: these commands touch only the loopback/disposable database. Never point
+`DATABASE_URL` at a shared or production database for local testing.
 
 Production build
-- Client: cd client && npm run build
-- Server: cd server && npm run build
+- (cd client && npm run build)
+- (cd server && npm run build)
 
 Notes
 - Students browse school-approved opportunities and sign up or waitlist directly from the slot detail page.

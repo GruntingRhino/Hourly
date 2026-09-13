@@ -902,6 +902,7 @@ export default function BeneficiaryOpportunities({ overrideBenId }: { overrideBe
                   onChange={(category) => setForm((p) => ({ ...p, category, customCategory: category }))}
                   options={categoryOptions}
                   placeholder="Search categories or type your own"
+                  label="Category"
                   required
                   allowCustomValue
                   className="w-full px-3 py-2 border border-[var(--border-s)] rounded-[2px] text-sm"

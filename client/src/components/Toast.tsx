@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, type ReactNode } from "react";
+import { useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { ToastContext, type ToastType } from "./toastContext";
 
 interface Toast {
@@ -34,10 +34,30 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 
 function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: number) => void }) {
+  // REPORT F-11: error toasts persist until dismissed (a 4 s timer is the
+  // only signal an error ever gets, and it can vanish before a
+  // screen-reader/keyboard user reaches it). Info/success keep the 4 s
+  // timer, paused while hovered or keyboard-focused.
+  const persistent = toast.type === "error";
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearTimer = useCallback(() => {
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  const startTimer = useCallback(() => {
+    if (persistent) return;
+    clearTimer();
+    timerRef.current = setTimeout(() => onRemove(toast.id), 4000);
+  }, [clearTimer, onRemove, persistent, toast.id]);
+
   useEffect(() => {
-    const timer = setTimeout(() => onRemove(toast.id), 4000);
-    return () => clearTimeout(timer);
-  }, [toast.id, onRemove]);
+    startTimer();
+    return clearTimer;
+  }, [startTimer, clearTimer]);
 
   const colors = {
     success: "bg-[var(--ok-t)] text-white",
@@ -47,10 +67,22 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: number) =
 
   return (
     <div
+      role={toast.type === "error" ? "alert" : "status"}
+      onMouseEnter={clearTimer}
+      onMouseLeave={startTimer}
+      onFocus={clearTimer}
+      onBlur={startTimer}
       className={`${colors[toast.type]} px-4 py-3 rounded-[3px]  text-sm font-medium animate-slide-up flex items-center justify-between gap-3`}
     >
       <span>{toast.message}</span>
-      <button onClick={() => onRemove(toast.id)} className="opacity-70 hover:opacity-100 text-lg leading-none">&times;</button>
+      <button
+        type="button"
+        onClick={() => onRemove(toast.id)}
+        aria-label="Dismiss notification"
+        className="opacity-70 hover:opacity-100 text-lg leading-none"
+      >
+        <span aria-hidden="true">&times;</span>
+      </button>
     </div>
   );
 }

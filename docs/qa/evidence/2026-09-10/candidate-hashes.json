@@ -1,0 +1,114 @@
+{
+  "generator": "sha256 over worktree candidate bytes; validated ^[0-9a-f]{64}$",
+  "head": "fef1cea75a47debab4538f3d99ab21557fa3ccf2",
+  "files": [
+    {
+      "path": "server/prisma/schema.prisma",
+      "sha256": "4198d6e959b148701eee3d74e8d1d6bc253883d027047ccb58f2c05bec3a733e"
+    },
+    {
+      "path": "server/prisma/migrations/20260910120000_add_attendance_qr_school_scope/migration.sql",
+      "sha256": "fd2eb8b67971453dc5fbba5c05815be4b92e3a13b499062723bf6c5369790d4e"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "c42622cc576bb81cbf0f41605b30bedd63febb8352b206110e558cf40cfc66d7"
+    },
+    {
+      "path": "server/package-lock.json",
+      "sha256": "59f066c7384566a2f97538a5ce78a023de7beb8fa84d7191c76599a7c8584e86"
+    },
+    {
+      "path": "client/package-lock.json",
+      "sha256": "30552c01f0bf57121df290a5fdbada6968c0d7eb46b734e9487e2a71e894373f"
+    },
+    {
+      "path": "scripts/vercel-production-build.sh",
+      "sha256": "01b44e3e101e7cc2852d7e702e81f0e54e46f6900a93c19bfc0a513822c5fc56"
+    },
+    {
+      "path": "scripts/vercel-production-migration-manifest.json",
+      "sha256": "6c38adccdfa534ce4c85cd47ac295d82fcb69583e5754a319c86f785434ab7e5"
+    },
+    {
+      "path": "scripts/vercel-production-build-gate.test.mjs",
+      "sha256": "1d1798f6c5e878ef3d79e4298b89d35fa45c4a127cce9fb781f42427f2dc5489"
+    },
+    {
+      "path": "server/src/routes/sessions.ts",
+      "sha256": "dcb477fa6c9564cb754a5c6b6f82a021e8d11bdc3f498c98c2967dbc96936360"
+    },
+    {
+      "path": "server/src/routes/beneficiaries.ts",
+      "sha256": "56f3865617f315a3928747aee861ae662cd8bf015c4f44683d9594e226318993"
+    },
+    {
+      "path": "server/src/lib/supervisorVerification.ts",
+      "sha256": "daa102b13127b623e1f4cd0fae7346192a0438ade543669e8416f49905cbd985"
+    },
+    {
+      "path": "server/src/lib/env.ts",
+      "sha256": "11e43ce299d487c1737280304ae91a22da5d5efa36daaf7fd0eb4a9ad6182103"
+    },
+    {
+      "path": "server/src/lib/uploadCleanup.ts",
+      "sha256": "1efa3c3748684430fd2f9d7a9a3fb748c76f379c7f08786e8a6f7c553e8e4309"
+    },
+    {
+      "path": "server/src/routes/auth.ts",
+      "sha256": "7ce05a8996d819b7f17960fda94bf88823e9c31e7ed22a992a967ee09a2f9e81"
+    },
+    {
+      "path": "server/package.json",
+      "sha256": "e2f6a3cd3d859195e98e5703240e38afb3e38ce928f8075789afcc3bf0ed86bb"
+    },
+    {
+      "path": "server/scripts/ensure-safe-test-target.sh",
+      "sha256": "809ee5ea707ab400dbc3d0f75ba5323a6789637c1c5e26489551508bda29a1e0"
+    },
+    {
+      "path": "server/tests/cancelledBeneficiaryExport.test.ts",
+      "sha256": "dc6d25850c8d8a2f3b802bcb03bb69660e3f6db93b49cc2e4e3c5ab05330ecaa"
+    },
+    {
+      "path": "server/tests/supervisorVerification.test.ts",
+      "sha256": "69a9f2ad8668fa1a67ebb0a9b31ca6fe54de02c0c0eb78bcf5277f495c77a5f9"
+    },
+    {
+      "path": "server/tests/syntheticSchoolPilot.integration.test.ts",
+      "sha256": "ac78a74415454c6a068f893b1cee8a554ae729335746c6353ae58626a033be3d"
+    },
+    {
+      "path": "server/tests/cookieAuthAndUploadCleanupArchitecture.test.ts",
+      "sha256": "caf44c8df23d5bcb8b4a23af894c1a8835034bd6e8cb43c6cdde0e8653f9c4e9"
+    },
+    {
+      "path": "server/tests/safeTestTargetGate.test.ts",
+      "sha256": "1661eaabc3fba4b159f8db139ac8454985ceb3b313a2f3d1d321e820252428ca"
+    },
+    {
+      "path": "client/src/lib/api.ts",
+      "sha256": "ca09a6dc02366cdaf6b88c5bf7dd63fbbbdd6cfe9d09c01b29960c6eb7818fc0"
+    },
+    {
+      "path": "client/src/pages/student/QrCheckin.tsx",
+      "sha256": "9bc00a9bd2abaa9a6d376b7ff30500a1d61fc56db88b78a5db487a5e21ca635a"
+    },
+    {
+      "path": "client/src/pages/SupervisorVerify.tsx",
+      "sha256": "9db028d3b054c23c80d30514cd232a81574d91ea62d41cff982f343f6dbb1a49"
+    },
+    {
+      "path": "client/src/App.tsx",
+      "sha256": "2aa83dfd97bbf4cb2df07d5d1e192c4212b2021fcb7e082d7b9c785d48b1d247"
+    },
+    {
+      "path": "docs/qa/VERCEL_PRODUCTION_MIGRATION.md",
+      "sha256": "2469fcd0c0aafff5bb0516c85cbb5f7c20d4bba62be13514d6be33be59e9d9fe"
+    },
+    {
+      "path": "README",
+      "sha256": "99a44a71cde743777a9604907416d9e9c54b061ea5754fbed971180cef8a7c57"
+    }
+  ]
+}

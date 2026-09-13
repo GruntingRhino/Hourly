@@ -96,7 +96,7 @@ try {
 
 const valid = run(productionBase, true);
 assert.equal(valid.status, 0, valid.stderr);
-assert.match(valid.stdout, /PRODUCTION_REVIEWED_HISTORY_MATCH=verified count=70/);
+assert.match(valid.stdout, /PRODUCTION_REVIEWED_HISTORY_MATCH=verified count=74/);
 assert.match(valid.stdout, /PRODUCTION_SCHEMA_MATCH=verified/);
 
 const legacyEnum = fakeTools({ diff: '-- DropEnum\nDROP TYPE "UserRole";' });

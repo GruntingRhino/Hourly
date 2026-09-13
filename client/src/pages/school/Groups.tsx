@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api, getErrorMessage } from "../../lib/api";
+import { escapeCsvCell } from "../../lib/csv";
 import { useAuth } from "../../hooks/useAuth";
+import Dialog from "../../components/Dialog";
 
 interface Classroom {
   id: string;
@@ -182,6 +184,8 @@ export default function SchoolGroups() {
   const [removing, setRemoving] = useState<string | null>(null);
   const [removeModal, setRemoveModal] = useState<{ sessionId: string; studentName: string } | null>(null);
   const [removeReason, setRemoveReason] = useState("");
+  const removeTitleId = useId();
+  const removeDescId = useId();
 
   const schoolId = user?.schoolId;
   const isOwner = user?.role === "SCHOOL_ADMIN";
@@ -432,7 +436,7 @@ export default function SchoolGroups() {
         deadlineLabel(student.daysToDeadline) ?? "",
       ]);
     }
-    const csv = rows.map((row) => row.map((cell) => `"${String(cell).replaceAll("\"", '""')}"`).join(",")).join("\n");
+    const csv = rows.map((row) => row.map(escapeCsvCell).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -484,40 +488,43 @@ export default function SchoolGroups() {
         />
       )}
 
-      {/* Remove Hours Modal */}
-      {removeModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-[var(--surface)] rounded-[3px] p-6 w-full max-w-sm">
-            <h2 className="text-[16px] font-semibold mb-2">Remove Verified Hours</h2>
-            <p className="text-sm text-[var(--text-sec)] mb-4">
-              Remove verified hours for <strong>{removeModal.studentName}</strong>? Enter a reason (optional).
-            </p>
-            <textarea
-              value={removeReason}
-              onChange={(e) => setRemoveReason(e.target.value)}
-              placeholder="Reason (optional)"
-              rows={3}
-              autoFocus
-              className="w-full px-3 py-2 border border-[var(--border-s)] rounded-[2px] text-sm mb-4"
-            />
-            <div className="flex gap-2">
-              <button
-                onClick={handleConfirmRemove}
-                disabled={removing !== null}
-                className="flex-1 py-2 bg-[var(--er-t)] text-white rounded-[2px] text-sm font-medium hover:bg-[var(--er-t)] disabled:opacity-50"
-              >
-                {removing !== null ? "Removing..." : "Remove Hours"}
-              </button>
-              <button
-                onClick={() => setRemoveModal(null)}
-                className="flex-1 py-2 border border-[var(--border-s)] rounded-[2px] text-sm hover:bg-[var(--surface-alt)]"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+      {/* Remove Hours Modal — shared accessible Dialog (Phase 1 pilot) */}
+      <Dialog
+        open={removeModal !== null}
+        onClose={() => setRemoveModal(null)}
+        labelledBy={removeTitleId}
+        describedBy={removeDescId}
+        size="sm"
+      >
+        <h2 id={removeTitleId} className="text-[16px] font-semibold mb-2">Remove Verified Hours</h2>
+        <p id={removeDescId} className="text-sm text-[var(--text-sec)] mb-4">
+          Remove verified hours for <strong>{removeModal?.studentName}</strong>? Enter a reason (optional).
+        </p>
+        <textarea
+          value={removeReason}
+          onChange={(e) => setRemoveReason(e.target.value)}
+          placeholder="Reason (optional)"
+          aria-label="Reason (optional)"
+          rows={3}
+          data-autofocus
+          className="w-full px-3 py-2 border border-[var(--border-s)] rounded-[2px] text-sm mb-4"
+        />
+        <div className="flex gap-2">
+          <button
+            onClick={handleConfirmRemove}
+            disabled={removing !== null}
+            className="flex-1 py-2 bg-[var(--er-t)] text-white rounded-[2px] text-sm font-medium hover:bg-[var(--er-t)] disabled:opacity-50"
+          >
+            {removing !== null ? "Removing..." : "Remove Hours"}
+          </button>
+          <button
+            onClick={() => setRemoveModal(null)}
+            className="flex-1 py-2 border border-[var(--border-s)] rounded-[2px] text-sm hover:bg-[var(--surface-alt)]"
+          >
+            Cancel
+          </button>
         </div>
-      )}
+      </Dialog>
 
       <div className="grid md:grid-cols-4 gap-6">
         {/* Left: Classroom list */}

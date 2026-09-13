@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useId } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { api, getErrorMessage } from "../../lib/api";
 import { useAuth } from "../../hooks/useAuth";
@@ -110,6 +110,9 @@ export default function SchoolRegister() {
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // REPORT F-08: stable id wiring the search combobox input to its listbox
+  // for `aria-controls` / `aria-activedescendant`.
+  const searchListboxId = useId();
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -362,7 +365,7 @@ export default function SchoolRegister() {
               Create a school administrator account to get started.
             </p>
             {error && (
-              <div className="mb-4 p-3 bg-[var(--er-bg)] border border-[var(--er-b)] rounded-[3px] text-[var(--er-t)] text-sm">{error}</div>
+              <div role="alert" className="mb-4 p-3 bg-[var(--er-bg)] border border-[var(--er-b)] rounded-[3px] text-[var(--er-t)] text-sm">{error}</div>
             )}
             <button
               onClick={() => googleUrl && (window.location.href = googleUrl)}
@@ -482,31 +485,33 @@ export default function SchoolRegister() {
 
             <form onSubmit={handleEmailCollectNext} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[var(--text)] mb-1">Full Name</label>
-                <input type="text" value={emailCollectName}
+                <label htmlFor="register-name" className="block text-sm font-medium text-[var(--text)] mb-1">Full Name</label>
+                <input id="register-name" type="text" value={emailCollectName}
                   onChange={(e) => setEmailCollectName(e.target.value)}
                   required autoComplete="name"
                   className="w-full px-3 py-2.5 border border-[var(--border-s)] rounded-[3px] focus:outline-none focus:ring-2 focus:ring-[var(--action)] text-sm"
                   placeholder="Jane Smith" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[var(--text)] mb-1">School Email</label>
-                <input type="email" value={emailCollectEmail}
+                <label htmlFor="register-email" className="block text-sm font-medium text-[var(--text)] mb-1">School Email</label>
+                <input id="register-email" type="email" value={emailCollectEmail}
                   onChange={(e) => setEmailCollectEmail(e.target.value)}
                   required autoComplete="email"
                   className="w-full px-3 py-2.5 border border-[var(--border-s)] rounded-[3px] focus:outline-none focus:ring-2 focus:ring-[var(--action)] text-sm"
                   placeholder="you@yourschool.edu" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[var(--text)] mb-1">Password</label>
+                <label htmlFor="register-password" className="block text-sm font-medium text-[var(--text)] mb-1">Password</label>
                 <div className="relative">
-                  <input type={showEmailPassword ? "text" : "password"}
+                  <input id="register-password" type={showEmailPassword ? "text" : "password"}
                     value={emailCollectPassword}
                     onChange={(e) => setEmailCollectPassword(e.target.value)}
                     required autoComplete="new-password"
                     className="w-full px-3 py-2.5 border border-[var(--border-s)] rounded-[3px] focus:outline-none focus:ring-2 focus:ring-[var(--action)] text-sm pr-10" />
                   <button type="button" onClick={() => setShowEmailPassword((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-faint)] hover:text-[var(--text-sec)]" tabIndex={-1}>
+                    aria-pressed={showEmailPassword}
+                    aria-label={showEmailPassword ? "Hide password" : "Show password"}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-faint)] hover:text-[var(--text-sec)]">
                     {showEmailPassword ? (
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
@@ -520,7 +525,7 @@ export default function SchoolRegister() {
                   </button>
                 </div>
                 {emailCollectPassword && (
-                  <ul className="mt-2 space-y-1">
+                  <ul aria-live="polite" aria-label="Password requirements" className="mt-2 space-y-1">
                     {PASSWORD_RULES.map((rule) => (
                       <li key={rule.label}
                         className={`flex items-center gap-1.5 text-xs ${rule.test(emailCollectPassword) ? "text-[var(--ok-t)]" : "text-[var(--text-faint)]"}`}>
@@ -589,7 +594,7 @@ export default function SchoolRegister() {
             </p>
 
             {error && (
-              <div className="mb-4 p-3 bg-[var(--er-bg)] border border-[var(--er-b)] rounded text-[var(--er-t)] text-sm">{error}</div>
+              <div role="alert" className="mb-4 p-3 bg-[var(--er-bg)] border border-[var(--er-b)] rounded text-[var(--er-t)] text-sm">{error}</div>
             )}
 
             {/* Domain-matched suggestions */}
@@ -638,6 +643,7 @@ export default function SchoolRegister() {
             <div className="flex gap-2 mb-1">
               <select
                 value={searchState}
+                aria-label="Filter schools by state"
                 onChange={(e) => handleStateChange(e.target.value)}
                 className="px-2 py-2.5 border border-[var(--border-s)] rounded-[2px] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--action)] w-24 shrink-0"
               >
@@ -656,6 +662,14 @@ export default function SchoolRegister() {
                   onKeyDown={handleKeyDown}
                   onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
                   placeholder="School name or city..."
+                  aria-label="Search for your school by name or city"
+                  role="combobox"
+                  aria-expanded={showDropdown && searchResults.length > 0}
+                  aria-controls={searchListboxId}
+                  aria-autocomplete="list"
+                  aria-activedescendant={
+                    showDropdown && activeIdx >= 0 ? `${searchListboxId}-option-${activeIdx}` : undefined
+                  }
                   autoComplete="off"
                   spellCheck={false}
                   className="w-full px-3 py-2.5 border border-[var(--border-s)] rounded-[2px] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--action)] pr-8"
@@ -667,7 +681,7 @@ export default function SchoolRegister() {
                   <button
                     onClick={() => { setSearchQuery(""); setSearchResults([]); setShowDropdown(false); setAlreadyClaimed(null); inputRef.current?.focus(); }}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-faint)] hover:text-[var(--text-sec)] text-sm leading-none"
-                    aria-label="Clear"
+                    aria-label="Clear school search"
                   >
                     ✕
                   </button>
@@ -677,11 +691,17 @@ export default function SchoolRegister() {
                 {showDropdown && searchResults.length > 0 && (
                   <div
                     ref={dropdownRef}
+                    id={searchListboxId}
+                    role="listbox"
+                    aria-label="Matching schools"
                     className="absolute z-50 left-0 right-0 top-full mt-1 bg-[var(--surface)] border border-[var(--border)] rounded-[2px]  max-h-64 overflow-y-auto"
                   >
                     {searchResults.map((school, idx) => (
                       <button
                         key={school.id}
+                        role="option"
+                        id={`${searchListboxId}-option-${idx}`}
+                        aria-selected={idx === activeIdx}
                         onMouseDown={(e) => { e.preventDefault(); handleSelectSchool(school); }}
                         className={`w-full text-left px-3 py-2.5 flex items-start justify-between gap-2 transition-colors ${
                           idx === activeIdx ? "bg-[var(--in-bg)]" : "hover:bg-[var(--surface-alt)]"
@@ -731,6 +751,7 @@ export default function SchoolRegister() {
                   onChange={(e) => setCustomSchoolName(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleCustomSchool(); }}}
                   placeholder="Enter school name manually"
+                  aria-label="Enter school name manually"
                   className="flex-1 px-3 py-2 border border-[var(--border-s)] rounded-[2px] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--action)]"
                 />
                 <button
@@ -785,14 +806,15 @@ export default function SchoolRegister() {
                 : "We'll send a verification link to confirm this registration."}
             </p>
             {error && (
-              <div className="mb-4 p-3 bg-[var(--er-bg)] border border-[var(--er-b)] rounded-[3px] text-[var(--er-t)] text-sm">{error}</div>
+              <div role="alert" className="mb-4 p-3 bg-[var(--er-bg)] border border-[var(--er-b)] rounded-[3px] text-[var(--er-t)] text-sm">{error}</div>
             )}
             <form onSubmit={handleSubmitRegistration} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[var(--text)] mb-1">
+                <label htmlFor="register-contact-email" className="block text-sm font-medium text-[var(--text)] mb-1">
                   School Email
                 </label>
                 <input
+                  id="register-contact-email"
                   type="email"
                   value={contactEmail}
                   onChange={(e) => {

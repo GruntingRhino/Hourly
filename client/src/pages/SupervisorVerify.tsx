@@ -4,7 +4,7 @@ import { api, getErrorMessage } from "../lib/api";
 
 export default function SupervisorVerify() {
   const [params] = useSearchParams();
-  const token = params.get("token") || "";
+  const token = params.get("token") || new URLSearchParams(window.location.hash.replace(/^#/, "")).get("token") || "";
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">(token ? "idle" : "error");
   const [message, setMessage] = useState(token ? "" : "No verification link was provided.");
@@ -14,7 +14,7 @@ export default function SupervisorVerify() {
     if (!token) return;
     setStatus("submitting"); setMessage("");
     try {
-      await api.post(`/beneficiaries/supervisor-verification/${encodeURIComponent(token)}/consume`, { supervisorEmail: email });
+      await api.post("/beneficiaries/supervisor-verification/consume", { token, supervisorEmail: email });
       setStatus("success"); setMessage("The service record has been verified. You may close this page.");
     } catch (error: unknown) { setStatus("error"); setMessage(getErrorMessage(error, "This verification link is invalid, expired, or already used.")); }
   };

@@ -385,14 +385,40 @@ router.get("/callback", publicGoogleAuthLimiter, (req: Request, res: Response) =
   res.redirect(target.toString());
 });
 
+// POST /api/auth/google/dev-signin allowlist: exact, case-insensitive email
+// match against DEV_SIGNIN_ALLOWLIST (comma-separated). Empty/missing list
+// denies everyone (fail closed) — the bypass must be explicitly enabled per
+// account, not just per host.
+function isDevSigninAllowlisted(email: string): boolean {
+  const allowlist = (process.env.DEV_SIGNIN_ALLOWLIST ?? "")
+    .split(",")
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean);
+  return allowlist.includes(email.trim().toLowerCase());
+}
+
 if (!isPubliclyDeployed()) {
   router.post("/dev-signin", publicGoogleAuthLimiter, async (req: Request, res: Response) => {
+    // Explicit second gate (mirrors POST /api/auth/impersonate in auth.ts):
+    // route-registration on !isPubliclyDeployed() alone leaves this session
+    // minter reachable on any reachable staging host with APP_ENV=development.
+    // Require ENABLE_IMPERSONATION=true at request time; otherwise answer 404
+    // as if the route did not exist.
+    if (process.env.ENABLE_IMPERSONATION !== "true") {
+      return res.status(404).json({ error: "Not found" });
+    }
     try {
       const { email, name, state } = strictObject({
         email: z.string().trim().toLowerCase().email().max(255),
         name: optionalTrimmedString(255, 1),
         state: optionalTrimmedString(50),
       }).parse(req.body);
+
+      // Exact-match allowlist, empty by default (fail closed). Set e.g.
+      // DEV_SIGNIN_ALLOWLIST="qa1@example.test,qa2@example.test".
+      if (!isDevSigninAllowlisted(email)) {
+        return res.status(403).json({ error: "Dev sign-in is not enabled for this account" });
+      }
 
       const effectiveName = name?.trim() || email.split("@")[0];
       const result = await handleGoogleIdentity({
@@ -402,6 +428,24 @@ if (!isPubliclyDeployed()) {
         state,
         persistGoogleId: false,
       });
+
+      // Best-effort audit trail for dev-bypass session mints (dev-only route;
+      // a logging failure is recorded to stderr rather than masking the
+      // sign-in result).
+      if (result.status === 200) {
+        try {
+          const mintedUserId = (result.body as { user?: { id?: string } }).user?.id ?? null;
+          await prisma.auditLog.create({
+            data: {
+              action: "DEV_SIGNIN",
+              actorId: mintedUserId,
+              details: JSON.stringify({ email, timestamp: new Date().toISOString() }),
+            },
+          });
+        } catch (logErr) {
+          console.error("Dev sign-in audit log failed:", logErr);
+        }
+      }
 
       return sendGoogleIdentityResult(res, result);
     } catch (err) {

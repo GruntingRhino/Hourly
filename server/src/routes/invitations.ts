@@ -203,22 +203,11 @@ router.post("/beneficiary/accept", publicInvitationLimiter, async (req: Request,
     });
 
     if (!inv) return res.status(404).json({ error: "Invalid invitation token" });
+    // A used token must never mint a fresh session: the invitee already has
+    // credentials from the first accept, so replay is rejected and the caller
+    // must use password login. (The atomic updateMany({ PENDING }) claim below
+    // remains the single-accept enforcement for concurrent first accepts.)
     if (inv.status === "ACCEPTED") {
-      const existingAcceptedUser = await prisma.user.findUnique({ where: { email: inv.sentTo } });
-      if (existingAcceptedUser?.role === "BENEFICIARY_ADMIN") {
-        const jwtToken = signUserToken(existingAcceptedUser);
-        setAuthCookie(res, jwtToken, { persistent: true });
-        return res.json({
-          token: jwtToken,
-          user: {
-            id: existingAcceptedUser.id,
-            email: existingAcceptedUser.email,
-            name: existingAcceptedUser.name,
-            role: existingAcceptedUser.role,
-            beneficiaryId: existingAcceptedUser.beneficiaryId,
-          },
-        });
-      }
       return res.status(400).json({ error: "Invitation already accepted" });
     }
     if (inv.status === "DECLINED") return res.status(400).json({ error: "Invitation was declined" });

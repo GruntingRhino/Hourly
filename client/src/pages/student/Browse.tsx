@@ -332,6 +332,7 @@ export default function StudentBrowse() {
           <input
             type="text"
             placeholder="Search opportunities, organizations, or categories..."
+            aria-label="Search opportunities, organizations, or categories"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full h-[34px] px-3 text-[13.5px] border border-[var(--border-s)] rounded-[2px] focus:outline-none focus:border-[var(--action)]"
@@ -342,6 +343,7 @@ export default function StudentBrowse() {
             onChange={setSelectedCategory}
             options={categoryOptions}
             placeholder="Filter by category"
+            label="Filter by category"
             clearable
             className="w-full h-[34px] px-3 pr-9 border border-[var(--border-s)] rounded-[2px] focus:outline-none focus:border-[var(--action)] text-[13.5px]"
           />

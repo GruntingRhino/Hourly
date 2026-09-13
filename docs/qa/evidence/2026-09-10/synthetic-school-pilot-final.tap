@@ -1,0 +1,74 @@
+TAP version 13
+# ⚠️  Optional environment variables not set (some features may be disabled):
+#    - JWT_SECRET_PREVIOUS
+#    - RESEND_API_KEY
+#    - EMAIL_FROM
+#    - GOOGLE_CLIENT_ID
+#    - GOOGLE_CLIENT_SECRET
+#    - GOOGLE_CALLBACK_URL
+#    - APP_URL
+#    - CLIENT_URL
+#    - PORT
+#    - ALLOWED_ORIGINS
+#    - FIELD_ENCRYPTION_KEY
+#    - ATTENDANCE_QR_SECRET
+#    - SUPERVISOR_VERIFICATION_SECRET
+#    - DEV_DATABASE_URL
+#    - CANVAS_CLIENT_ID
+#    - CANVAS_CLIENT_SECRET
+#    - CANVAS_CALLBACK_URL
+#    - CANVAS_ALLOWED_ORIGINS
+#    - CANVAS_ENABLE_MOCK
+#    - CANVAS_REQUEST_TIMEOUT_MS
+#    - CANVAS_PAGE_SIZE
+#    - GOOGLE_CLASSROOM_CLIENT_ID
+#    - GOOGLE_CLASSROOM_CLIENT_SECRET
+#    - GOOGLE_CLASSROOM_CALLBACK_URL
+#    - GOOGLE_CLASSROOM_ENABLE_MOCK
+#    - GOOGLE_CLASSROOM_REQUEST_TIMEOUT_MS
+#    - GOOGLE_CLASSROOM_PAGE_SIZE
+#    - UPSTASH_REDIS_REST_URL
+#    - UPSTASH_REDIS_REST_TOKEN
+# [RateLimit] Using in-memory bucket store. On Vercel serverless, rate limits reset on every cold start. Configure shared production rate limiting with PostgreSQL or Upstash.
+# [Auth] Dev impersonation routes disabled. Set ENABLE_IMPERSONATION=true to enable.
+# {"type":"request","requestId":"f42a8176-a36d-489c-8f3b-00df8c5a6caa","method":"POST","path":"/slots/cmtuzkkqv000zbjvdmo7954yq/signup","status":201,"ms":63,"ip":"127.0.0.1","userId":"cmtuzkkpu000cbjvdvod2urvv"}
+# {"type":"request","requestId":"78063cb2-44a0-47dd-9f5e-ded4c901a5cc","method":"POST","path":"/slots/cmtuzkkqv000zbjvdmo7954yq/signup","status":201,"ms":21,"ip":"127.0.0.1","userId":"cmtuzkkq1000fbjvdig9xxrhx"}
+# {"type":"request","requestId":"8b276798-54f6-44b2-857d-9ce00a676491","method":"POST","path":"/signups/cmtuzkktl0011bjvdn0nfc2fd/cancel","status":200,"ms":38,"ip":"127.0.0.1","userId":"cmtuzkkpu000cbjvdvod2urvv"}
+# {"type":"request","requestId":"4b080baa-59af-46d7-a1aa-55694ab33478","method":"POST","path":"/cmtuzkkpg0004bjvdac7zg1dd/opportunities/cmtuzkkqs000xbjvd2t4ghggg/attendance","status":200,"ms":20,"ip":"127.0.0.1","userId":"cmtuzkkq5000ibjvdtp7bpdyw"}
+# {"type":"request","requestId":"0882e95b-93f4-41a0-bbe2-a7cc69231d20","method":"POST","path":"/signups/cmtuzkkun0015bjvdi2vhnohe/approve","status":200,"ms":25,"ip":"127.0.0.1","userId":"cmtuzkkq5000ibjvdtp7bpdyw"}
+# {"type":"request","requestId":"80ff59cb-6ed7-4b98-baaa-449e0a0f490d","method":"GET","path":"/student","status":200,"ms":33,"ip":"127.0.0.1","userId":"cmtuzkkq1000fbjvdig9xxrhx"}
+# {"type":"request","requestId":"7f0b85b0-680b-4660-bf83-1b38517dc51c","method":"POST","path":"/student/transcript","status":201,"ms":42,"ip":"127.0.0.1","userId":"cmtuzkkq1000fbjvdig9xxrhx"}
+# {"type":"request","requestId":"f599a1ad-fd10-48e4-bb76-65f2857245e2","method":"POST","path":"/transcripts/cmtuzkkzv001nbjvd5j01qxpr/certify","status":200,"ms":10,"ip":"127.0.0.1","userId":"cmtuzkkpk0006bjvdxlxtceoq"}
+# {"type":"request","requestId":"6ab7885a-2b6f-4447-93f4-e64fb30a631b","method":"GET","path":"/export/csv","status":200,"ms":14,"ip":"127.0.0.1","userId":"cmtuzkkq1000fbjvdig9xxrhx"}
+# {"type":"request","requestId":"1b5e392a-2aa3-45be-a863-4dcd3aa568bd","method":"GET","path":"/student","status":403,"ms":9,"ip":"127.0.0.1","userId":"cmtuzkkpr000abjvde2aj2x3b"}
+# {"type":"request","requestId":"7d591e73-e0ad-4f34-9162-e85bc711f061","method":"GET","path":"/student","status":200,"ms":30,"ip":"127.0.0.1","userId":"cmtuzkkpo0008bjvdkt5hdozq"}
+# {"type":"request","requestId":"be376b30-5aeb-4a66-bda3-0a75f4a6b86e","method":"POST","path":"/signups/cmtuzkkun0015bjvdi2vhnohe/supervisor-verification","status":201,"ms":13,"ip":"127.0.0.1","userId":"cmtuzkkq5000ibjvdtp7bpdyw"}
+# {"type":"request","requestId":"9126443d-5dbe-4507-81f4-8e203f4032a2","method":"POST","path":"/supervisor-verification/consume","status":200,"ms":12,"ip":"127.0.0.1","userId":null}
+# {"type":"request","requestId":"f9b3b0eb-d21d-4798-9e9f-d87586bf4d63","method":"POST","path":"/supervisor-verification/consume","status":400,"ms":5,"ip":"127.0.0.1","userId":null}
+# {"type":"request","requestId":"b269e7f1-9d8d-4678-be7b-ec62ec3caa65","method":"POST","path":"/signups/cmtuzkkun0015bjvdi2vhnohe/supervisor-verification","status":403,"ms":10,"ip":"127.0.0.1","userId":"cmtuzkkpr000abjvde2aj2x3b"}
+# {"type":"request","requestId":"128b51fa-f8e0-427c-b318-85696afef3fe","method":"POST","path":"/signups/cmtuzkkun0015bjvdi2vhnohe/supervisor-verification","status":201,"ms":12,"ip":"127.0.0.1","userId":"cmtuzkkq5000ibjvdtp7bpdyw"}
+# {"type":"request","requestId":"4c2ec960-31c4-4bb2-89e9-dd3c26d3e905","method":"POST","path":"/supervisor-verification/consume","status":400,"ms":4,"ip":"127.0.0.1","userId":null}
+# {"type":"request","requestId":"606d9d56-b732-4a22-ab53-3d4c5d98820f","method":"POST","path":"/supervisor-verification/consume","status":400,"ms":4,"ip":"127.0.0.1","userId":null}
+# {"type":"request","requestId":"ef612ae0-284d-4a55-aabd-8ff925bc35c2","method":"POST","path":"/cmtuzkkqp000vbjvdeazblbko/qr-token","status":201,"ms":11,"ip":"127.0.0.1","userId":"cmtuzkkqj000rbjvdinx9j43a"}
+# {"type":"request","requestId":"90e72f61-e074-4890-a80a-b747238e294c","method":"POST","path":"/cmtuzkkqp000vbjvdeazblbko/qr-checkin","status":200,"ms":14,"ip":"127.0.0.1","userId":"cmtuzkkpu000cbjvdvod2urvv"}
+# {"type":"request","requestId":"1434651e-8cd2-4630-b22a-1470594412b6","method":"POST","path":"/cmtuzkkqp000vbjvdeazblbko/qr-checkin","status":409,"ms":5,"ip":"127.0.0.1","userId":"cmtuzkkpu000cbjvdvod2urvv"}
+# {"type":"request","requestId":"ea5da8e7-be4e-4c7d-bcb7-66077b964bf8","method":"POST","path":"/cmtuzkkqp000vbjvdeazblbko/qr-checkin","status":403,"ms":5,"ip":"127.0.0.1","userId":"cmtuzkkq1000fbjvdig9xxrhx"}
+# {"type":"request","requestId":"6993a084-0a6a-4fe5-9476-4d125f2e2f68","method":"POST","path":"/cmtuzkkqp000vbjvdeazblbko/qr-token","status":403,"ms":6,"ip":"127.0.0.1","userId":"cmtuzkkpr000abjvde2aj2x3b"}
+# {"type":"request","requestId":"93cfc403-d04f-4b98-b963-8b8b1332f2a8","method":"POST","path":"/cmtuzkkqp000vbjvdeazblbko/qr-checkin","status":400,"ms":5,"ip":"127.0.0.1","userId":"cmtuzkkpu000cbjvdvod2urvv"}
+# {"type":"request","requestId":"ac361470-bd8c-482a-a8d4-791280f5419f","method":"POST","path":"/cmtuzkl6k001zbjvdtw19rhb8/qr-token","status":201,"ms":7,"ip":"127.0.0.1","userId":"cmtuzkkqj000rbjvdinx9j43a"}
+# {"type":"request","requestId":"d0ac3494-76df-4e72-8b79-639d103eb8ca","method":"POST","path":"/cmtuzkl6k001zbjvdtw19rhb8/qr-checkin","status":400,"ms":5,"ip":"127.0.0.1","userId":"cmtuzkkq1000fbjvdig9xxrhx"}
+# Subtest: fake school pilot: roles, waitlist, attendance, approval, ledger, transcript, export, isolation
+ok 1 - fake school pilot: roles, waitlist, attendance, approval, ledger, transcript, export, isolation
+  ---
+  duration_ms: 713.425568
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1832.255491

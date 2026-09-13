@@ -238,9 +238,12 @@ export default function Privacy() {
 
           <p className="font-medium text-[var(--text)] mt-5">5.2 Parent Progress Sharing</p>
           <p className="mt-2">
-            School administrators may generate a time-limited, read-only parent progress link for
-            a student. This link discloses only the student's hours completed, service goal, and
-            deadline status. No other personal data is shared through this link.
+            Self-service parent progress links are currently disabled. There is no
+            time-limited, read-only parent link available in the Service: link
+            generation and token-based parent views return an error until a
+            school-managed sharing workflow is implemented. Progress sharing must
+            be initiated through a school-controlled workflow — contact the
+            student's school administrator.
           </p>
 
           <p className="font-medium text-[var(--text)] mt-5">5.3 Service Providers</p>
@@ -512,13 +515,19 @@ export default function Privacy() {
       content: (
         <>
           <p>
-            GoodHours uses <strong>localStorage</strong> (not cookies) to store your
-            authentication token on your device after login. This token:
+            GoodHours authenticates you with an <strong>HttpOnly session cookie</strong>{" "}
+            (<span className="font-medium">gh_session</span>) set by the server after login.
+            Because it is HttpOnly, client-side JavaScript cannot read the session token,
+            which limits the impact of cross-site scripting on session theft. The cookie is
+            scoped to the GoodHours origin and is sent automatically with same-origin
+            requests (a Bearer authorization header is accepted only as a compatibility
+            fallback):
           </p>
           <ul className="list-disc pl-5 mt-2 space-y-1.5">
-            <li>Is scoped to the GoodHours origin and not accessible to other websites.</li>
-            <li>Contains a signed JWT with your user ID, role, and an expiration timestamp.</li>
-            <li>Is cleared when you log out or delete your account.</li>
+            <li>A <strong>session cookie</strong> is cleared when you close your browser; a <strong>persistent ("remember me") cookie</strong> is stored for up to 7 days.</li>
+            <li>The session token carried by the cookie remains valid for up to 24 hours for student accounts and up to 7 days for other roles; after the token expires you must log in again even if the cookie is still stored.</li>
+            <li>Logging out clears the session cookie and the locally cached profile.</li>
+            <li>The app does not store your session token in localStorage or sessionStorage; only a non-sensitive cached copy of your profile is kept locally to speed up repeat visits.</li>
           </ul>
           <p className="mt-3">
             We do not use third-party tracking cookies, advertising cookies, or behavioral

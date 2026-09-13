@@ -9,6 +9,7 @@ import prisma from "../lib/prisma";
 import { runSerializableTransaction } from "../lib/serializableTransaction";
 import { authenticate } from "../middleware/auth";
 import { requireRole } from "../middleware/rbac";
+import { createHybridRateLimit } from "../middleware/rateLimit";
 import { sendPasswordResetEmail, sendStudentInvitationEmail, sendTeacherInvitationEmail, sendTeacherAssignmentEmail, CLIENT_URL } from "../services/email";
 import { buildStudentProgressRecords, type StudentProgressRecord } from "../lib/studentProgress";
 import { logDataAccess } from "../lib/dataAccessLog";
@@ -45,6 +46,20 @@ function fuzzyMatchField(header: string): FieldTarget {
   return "skip";
 }
 type TeacherImportIssue = { row: number; email: string | null; reason: string };
+// 10 bulk CSV imports per staff member per hour — each call synchronously
+// parses and validates up to 500 rows, so unbounded bursts are a CPU/memory
+// concern even with per-payload size caps below.
+const teacherCsvImportLimiter = createHybridRateLimit({
+  namespace: "csv-import",
+  windowMs: 60 * 60 * 1000,
+  maxPerIp: 30,
+  maxPerUser: 10,
+});
+
+// Pre-parse bound on the raw CSV payload (rejects oversized bodies before the
+// synchronous csv-parse call) and per-record bound for the parser itself.
+const MAX_CSV_PAYLOAD_CHARS = 500_000;
+const MAX_CSV_RECORD_CHARS = 100_000;
 const COHORT_INVITE_LIMIT_PER_HOUR = 20;
 const COHORT_INVITE_AUDIT_ACTION = "COHORT_INVITE_DISPATCHED";
 const TEACHER_IMPORT_HEADERS = ["name", "email"] as const;
@@ -686,7 +701,7 @@ router.get("/school-students", authenticate, requireRole("SCHOOL_ADMIN", "TEACHE
 });
 
 // POST /api/cohorts/teachers/import — CSV import teacher-to-cohort assignments at school scope
-router.post("/teachers/import", authenticate, requireRole("SCHOOL_ADMIN"), async (req: Request, res: Response) => {
+router.post("/teachers/import", authenticate, requireRole("SCHOOL_ADMIN"), teacherCsvImportLimiter, async (req: Request, res: Response) => {
   try {
     const scope = await getStaffAccessScope(req.user!.userId);
     if (!scope?.schoolId) return res.status(400).json({ error: "Not associated with a school" });
@@ -698,7 +713,7 @@ router.post("/teachers/import", authenticate, requireRole("SCHOOL_ADMIN"), async
     if (!actor) return res.status(404).json({ error: "User not found" });
 
     const { csvData, dryRun } = z.object({
-      csvData: z.string().min(1),
+      csvData: z.string().min(1).max(MAX_CSV_PAYLOAD_CHARS),
       dryRun: z.boolean().optional().default(false),
     }).parse(req.body);
     let headerRow: string[];
@@ -707,6 +722,7 @@ router.post("/teachers/import", authenticate, requireRole("SCHOOL_ADMIN"), async
         to_line: 1,
         skip_empty_lines: true,
         trim: true,
+        max_record_size: MAX_CSV_RECORD_CHARS,
       }) as string[][];
       headerRow = (parsedHeader[0] ?? []).map((value) => String(value).trim().toLowerCase());
     } catch (parseErr: any) {
@@ -724,6 +740,7 @@ router.post("/teachers/import", authenticate, requireRole("SCHOOL_ADMIN"), async
       columns: true,
       skip_empty_lines: true,
       trim: true,
+      max_record_size: MAX_CSV_RECORD_CHARS,
     }) as Array<Record<string, string>>;
 
     const cohortNames = Array.from(new Set(
@@ -1024,7 +1041,7 @@ router.put("/:id", authenticate, requireRole("SCHOOL_ADMIN", "TEACHER"), async (
 });
 
 // POST /api/cohorts/:id/import — CSV import students
-router.post("/:id/import", authenticate, requireRole("SCHOOL_ADMIN", "TEACHER"), async (req: Request, res: Response) => {
+router.post("/:id/import", authenticate, requireRole("SCHOOL_ADMIN", "TEACHER"), teacherCsvImportLimiter, async (req: Request, res: Response) => {
   try {
     const scope = await getStaffAccessScope(req.user!.userId);
     const cohort = await prisma.cohort.findUnique({
@@ -1036,7 +1053,7 @@ router.post("/:id/import", authenticate, requireRole("SCHOOL_ADMIN", "TEACHER"),
     if (scope && !canAccessCohort(scope, cohort.id)) return res.status(403).json({ error: "You do not control this cohort" });
 
     const { csvData, columnMapping: rawColumnMapping, dryRun } = z.object({
-      csvData: z.string().min(1),
+      csvData: z.string().min(1).max(MAX_CSV_PAYLOAD_CHARS),
       columnMapping: z.record(z.string()).optional(),
       // §10 staged imports: preview exactly what would happen (rows
       // added/skipped/errored) without creating any invitation, sending
@@ -1049,7 +1066,7 @@ router.post("/:id/import", authenticate, requireRole("SCHOOL_ADMIN", "TEACHER"),
     // Parse header row
     let headerRow: string[];
     try {
-      const parsedHeader = parse(csvData, { to_line: 1, skip_empty_lines: true, trim: true }) as string[][];
+      const parsedHeader = parse(csvData, { to_line: 1, skip_empty_lines: true, trim: true, max_record_size: MAX_CSV_RECORD_CHARS }) as string[][];
       headerRow = (parsedHeader[0] ?? []).map((v) => String(v).trim());
     } catch (parseErr: any) {
       const row = Number(parseErr?.lines ?? 1) || 1;
@@ -1091,7 +1108,7 @@ router.post("/:id/import", authenticate, requireRole("SCHOOL_ADMIN", "TEACHER"),
     // Parse all records
     let records: any[];
     try {
-      records = parse(csvData, { columns: true, skip_empty_lines: true, trim: true });
+      records = parse(csvData, { columns: true, skip_empty_lines: true, trim: true, max_record_size: MAX_CSV_RECORD_CHARS });
     } catch (parseErr: any) {
       const row = Number(parseErr?.lines ?? 1) || 1;
       return res.status(400).json({
@@ -1460,7 +1477,7 @@ router.post("/:id/teachers", authenticate, requireRole("SCHOOL_ADMIN"), async (r
 });
 
 // POST /api/cohorts/:id/teachers/import — CSV import cohort teachers
-router.post("/:id/teachers/import", authenticate, requireRole("SCHOOL_ADMIN"), async (req: Request, res: Response) => {
+router.post("/:id/teachers/import", authenticate, requireRole("SCHOOL_ADMIN"), teacherCsvImportLimiter, async (req: Request, res: Response) => {
   try {
     const scope = await getStaffAccessScope(req.user!.userId);
     const cohort = await prisma.cohort.findUnique({ where: { id: req.params.id } });
@@ -1474,7 +1491,7 @@ router.post("/:id/teachers/import", authenticate, requireRole("SCHOOL_ADMIN"), a
     if (!actor) return res.status(404).json({ error: "User not found" });
 
     const { csvData, dryRun } = z.object({
-      csvData: z.string().min(1),
+      csvData: z.string().min(1).max(MAX_CSV_PAYLOAD_CHARS),
       dryRun: z.boolean().optional().default(false),
     }).parse(req.body);
     let headerRow: string[];
@@ -1483,6 +1500,7 @@ router.post("/:id/teachers/import", authenticate, requireRole("SCHOOL_ADMIN"), a
         to_line: 1,
         skip_empty_lines: true,
         trim: true,
+        max_record_size: MAX_CSV_RECORD_CHARS,
       }) as string[][];
       headerRow = (parsedHeader[0] ?? []).map((value) => String(value).trim().toLowerCase());
     } catch (parseErr: any) {
@@ -1500,6 +1518,7 @@ router.post("/:id/teachers/import", authenticate, requireRole("SCHOOL_ADMIN"), a
       columns: true,
       skip_empty_lines: true,
       trim: true,
+      max_record_size: MAX_CSV_RECORD_CHARS,
     }) as Array<Record<string, string>>;
 
     const result = {

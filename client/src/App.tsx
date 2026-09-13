@@ -35,6 +35,7 @@ const SlotDetail = lazy(() => import("./pages/student/SlotDetail"));
 const StudentMessages = lazy(() => import("./pages/student/Messages"));
 const StudentSettings = lazy(() => import("./pages/student/Settings"));
 const StudentSelfSubmit = lazy(() => import("./pages/student/SelfSubmit"));
+const QrCheckin = lazy(() => import("./pages/student/QrCheckin"));
 const SchoolDashboard = lazy(() => import("./pages/school/Dashboard"));
 const StudentList = lazy(() => import("./pages/school/StudentList"));
 const SchoolGroups = lazy(() => import("./pages/school/Groups"));
@@ -43,6 +44,7 @@ const CohortDetail = lazy(() => import("./pages/school/CohortDetail"));
 const SchoolBeneficiaries = lazy(() => import("./pages/school/Beneficiaries"));
 const BeneficiaryDiscover = lazy(() => import("./pages/school/Discover"));
 const SchoolOpportunities = lazy(() => import("./pages/school/SchoolOpportunities"));
+const AttendanceQr = lazy(() => import("./pages/school/AttendanceQr"));
 const SchoolSelfSubmissions = lazy(() => import("./pages/school/SelfSubmissions"));
 const SchoolMessages = lazy(() => import("./pages/school/Messages"));
 const SchoolSettings = lazy(() => import("./pages/school/Settings"));
@@ -133,6 +135,7 @@ function AppRoutes() {
               <Route path="/opportunity/:id" element={<OpportunityDetail />} />
               <Route path="/slot/:id" element={<SlotDetail />} />
               <Route path="/submit" element={<StudentSelfSubmit />} />
+              <Route path="/qr-checkin" element={<QrCheckin />} />
               <Route path="/messages" element={<StudentMessages />} />
               <Route path="/settings" element={<StudentSettings />} />
             </>
@@ -159,6 +162,7 @@ function AppRoutes() {
                   <Route path="/opportunities" element={<SchoolOpportunities />} />
                 </>
               )}
+              <Route path="/attendance-qr" element={<AttendanceQr />} />
               <Route path="/submissions" element={<SchoolSelfSubmissions />} />
               {isSchoolAdminLike && <Route path="/launch" element={<LaunchCenter />} />}
               <Route path="/messages" element={<SchoolMessages />} />

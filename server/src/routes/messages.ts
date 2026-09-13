@@ -354,6 +354,14 @@ router.post("/", authenticate, sendMessageLimiter, async (req: Request, res: Res
     if ((!receiverId && !receiverEmail) || !body) {
       return res.status(400).json({ error: "Recipient and body are required" });
     }
+    // Bounded lengths, mirroring POST /bulk (body ≤ 5000, subject ≤ 255):
+    // Message.body is otherwise unbounded plaintext in the database.
+    if (typeof body !== "string" || body.length > 5000) {
+      return res.status(400).json({ error: "Message body must be 1–5000 characters" });
+    }
+    if (subject !== undefined && subject !== null && (typeof subject !== "string" || subject.length > 255)) {
+      return res.status(400).json({ error: "Subject must be 255 characters or fewer" });
+    }
 
     const receiver = receiverEmail
       ? await prisma.user.findUnique({ where: { email: receiverEmail } })

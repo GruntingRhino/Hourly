@@ -29,3 +29,40 @@
     background: var(--bg);
   }
 }
+
+/*
+ * Accessibility remediation (REPORT F-05): always-visible keyboard focus
+ * indicator. Many components use Tailwind `focus:outline-none` (which only
+ * removes the outline on `:focus`, for mouse and keyboard alike). These
+ * intentionally UNLAYERED `:focus-visible` rules take precedence over
+ * Tailwind's layered utilities, so mouse clicks keep the existing
+ * border/ring treatment while keyboard focus always shows a 2px outline
+ * with a 2px offset. No per-component class changes were made.
+ */
+:where(a, button, input, select, textarea, [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid var(--action);
+  outline-offset: 2px;
+}
+
+/* Keep keyboard focus from hiding under the sticky app header (WCAG 2.4.11). */
+main :where(h1, h2, [tabindex="-1"]) {
+  scroll-margin-top: 72px;
+}
+
+@media (forced-colors: active) {
+  :where(a, button, input, select, textarea, [role="button"], [tabindex]):focus-visible {
+    outline: 2px solid Highlight;
+  }
+}
+
+/* REPORT F-19: honor OS reduced-motion for transitions/animations (incl. the
+ * toast slide-up). Meaning is preserved because spinners/toasts keep their
+ * text equivalents. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

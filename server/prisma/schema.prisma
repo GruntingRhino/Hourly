@@ -314,6 +314,7 @@ model School {
   approvedInterestTags     String?
   signupQuestionTemplates  SignupQuestionTemplate[]
   supervisorVerifications  SupervisorVerification[]
+  attendanceQrTokens       AttendanceQrToken[]
   beneficiaryImportBatches BeneficiaryImportBatch[]
   ownershipBlocks          SchoolOwnershipBlock[]
 }
@@ -1275,11 +1276,14 @@ model AuditLog {
   id        String   @id @default(cuid())
   action    String // CHECK_IN, CHECK_OUT, APPROVE, REJECT, OVERRIDE, etc.
   details   String? // JSON
-  actorId   String
+  // Nullable so a deleted user's rows survive as tombstones (actorId → null,
+  // details redacted) instead of being wiped — the disclosure trail must
+  // outlive the account. FK is ON DELETE SET NULL.
+  actorId   String?
   sessionId String?
   createdAt DateTime @default(now())
 
-  actor   User            @relation("AuditActor", fields: [actorId], references: [id])
+  actor   User?           @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
   session ServiceSession? @relation(fields: [sessionId], references: [id])
 
   @@index([action, createdAt])
@@ -1330,8 +1334,11 @@ model ServiceHourLedgerEntry {
 
 model DataAccessLog {
   id         String   @id @default(cuid())
-  actorId    String
-  actor      User     @relation("DataAccessActor", fields: [actorId], references: [id])
+  // Nullable so a deleted user's rows survive as tombstones (actorId → null,
+  // details redacted) instead of being wiped — the FERPA disclosure trail
+  // must outlive the account. FK is ON DELETE SET NULL.
+  actorId    String?
+  actor      User?    @relation("DataAccessActor", fields: [actorId], references: [id], onDelete: SetNull)
   action     String // VIEW_STUDENT_REPORT, VIEW_SCHOOL_REPORT, EXPORT_CSV, VIEW_SESSIONS, VIEW_STUDENT_LIST, EXPORT_SCHOOL_DATA, DELETE_STUDENT
   targetType String? // "student", "school", "session"
   targetId   String? // ID of the accessed record
@@ -1341,6 +1348,63 @@ model DataAccessLog {
 
   @@index([schoolId, createdAt])
   @@index([actorId, createdAt])
+}
+
+// ─── Retention policy + legal holds (DEF-LEGAL-007 scaffolding) ───
+//
+// Durable, fail-closed, NON-DESTRUCTIVE records for a future retention/
+// legal-hold workflow. Read the contract before touching these tables:
+//
+// - These tables RECORD owner decisions; they do not execute them. There is
+//   no purge caller, no deleteMany on any audit table, and none must be
+//   built until DEF-LEGAL-007 is resolved (approved retention/deletion
+//   schedule + named records administrator + school approval). See
+//   server/src/lib/retentionPolicy.ts (pure advisory gate) and
+//   server/src/lib/retentionStore.ts (atomic snapshot reads only).
+// - Absence of an explicitly owner-approved RetentionPolicy row blocks every
+//   purge-eligibility check. No policy is seeded; `ownerApproved` defaults to
+//   false and approval requires ownerApproved + approvedBy + approvedAt.
+// - Retention durations are NEVER chosen by code or schema. `rules` carries
+//   owner-provided thresholds that the pure gate validates only as finite
+//   positive numbers. No legal compliance is claimed by these tables.
+// - LegalHold rows are append-only evidence: releasing a hold sets
+//   active=false + releasedAt/releasedBy; hold rows are never deleted.
+// - schoolId is a plain nullable scalar with NO foreign key on purpose: a
+//   hold must keep covering its scope even if the school row is deleted.
+//   recordType is free text on purpose too; the read layer treats an unknown
+//   value as covering every record type (fail-closed) rather than none.
+
+model RetentionPolicy {
+  id            String   @id @default(cuid())
+  version       Int
+  ownerApproved Boolean  @default(false)
+  approvedBy    String?
+  approvedAt    DateTime?
+  // JSON array of { recordType: "AuditLog" | "DataAccessLog" |
+  // "BeneficiaryAuditLog", olderThanDays: number }. Owner-provided inputs;
+  // validated only as finite positives, never chosen here.
+  rules         Json
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([version, createdAt])
+}
+
+model LegalHold {
+  id         String    @id @default(cuid())
+  active     Boolean   @default(true)
+  recordType String? // null = every audit record type
+  schoolId   String? // null = every school; plain scalar, no FK (see above)
+  targetId   String? // null = every target row
+  reason     String? // human-entered justification; code makes no legal claims
+  createdBy  String? // owner/admin identity that placed the hold
+  releasedAt DateTime?
+  releasedBy String? // identity that released the hold; rows are never deleted
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([active, createdAt])
+  @@index([schoolId, active])
 }
 
 // ─── Messages ───────────────────────────────────────────────────
@@ -1754,6 +1818,7 @@ model GoogleClassroomOAuthState {
 model AttendanceQrToken {
   id            String    @id @default(cuid())
   opportunityId String
+  schoolId      String?
   createdById   String
   tokenHash     String    @unique
   expiresAt     DateTime
@@ -1761,10 +1826,12 @@ model AttendanceQrToken {
   createdAt     DateTime  @default(now())
 
   opportunity Opportunity              @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  school      School?                  @relation(fields: [schoolId], references: [id], onDelete: SetNull)
   createdBy   User                     @relation("AttendanceQrTokenCreator", fields: [createdById], references: [id])
   redemptions AttendanceQrRedemption[]
 
   @@index([opportunityId, expiresAt])
+  @@index([schoolId, expiresAt])
 }
 
 model AttendanceQrRedemption {

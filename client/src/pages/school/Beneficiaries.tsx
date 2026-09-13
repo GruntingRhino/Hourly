@@ -712,6 +712,7 @@ const handleDrop = async (benId: string, name: string) => {
               value={opportunitySearchQuery}
               onChange={(e) => setOpportunitySearchQuery(e.target.value)}
               placeholder="Search approved opportunities or partners..."
+              aria-label="Search approved opportunities or partners"
               className="w-full px-3 py-2 border border-[var(--border-s)] rounded-[2px] text-sm"
             />
             <SearchableSelect
@@ -719,6 +720,7 @@ const handleDrop = async (benId: string, name: string) => {
               onChange={setOpportunityCategoryFilter}
               options={opportunityCategoryOptions}
               placeholder="Filter by category"
+              label="Filter by category"
               clearable
               className="w-full px-3 py-2 pr-8 border border-[var(--border-s)] rounded-[2px] text-sm"
             />

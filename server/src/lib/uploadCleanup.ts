@@ -1,8 +1,9 @@
 import fs from "fs";
 import path from "path";
 import prisma from "./prisma";
+import { resolveWritableUploadDir } from "./runtimeStorage";
 
-const UPLOAD_DIR = path.join(__dirname, "../../../uploads/beneficiary-attachments");
+const UPLOAD_DIR = resolveWritableUploadDir("beneficiary-attachments");
 const ORPHAN_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 async function cleanOrphanedDiskFiles(): Promise<void> {

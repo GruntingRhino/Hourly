@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { api, getErrorMessage } from "../../lib/api";
+import { escapeCsvCell } from "../../lib/csv";
 
 const PASSWORD_RULES = [
   { label: "At least 8 characters", test: (p: string) => p.length >= 8 },
@@ -356,7 +357,7 @@ export default function OrgSettings() {
         ["Volunteer", "Total Hours", "Sessions"],
         ...volunteers.map((v) => [v.label || "Anonymous volunteer", v.totalHours?.toString() || "0", v.sessionCount?.toString() || "0"]),
       ];
-      const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+      const csv = rows.map((r) => r.map(escapeCsvCell).join(",")).join("\n");
       const blob = new Blob([csv], { type: "text/csv" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");

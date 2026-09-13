@@ -1,4 +1,5 @@
 import { Router, Request, Response, NextFunction } from "express";
+import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
@@ -901,7 +902,7 @@ router.put("/password", authenticate, async (req: Request, res: Response) => {
 
     const refreshedToken = signUserToken(updated);
     setAuthCookie(res, refreshedToken, { persistent: true });
-    res.json({ message: "Password changed successfully", token: refreshedToken });
+    res.json({ message: "Password changed successfully" });
   } catch (err) {
     if (err instanceof z.ZodError) {
       return res.status(400).json({ error: firstZodError(err) });
@@ -1149,24 +1150,31 @@ router.delete("/account", authenticate, async (req: Request, res: Response) => {
         }
       }
 
-      const deleteUserServiceSessionAuditLogs = async () => {
-        const sessions = await tx.serviceSession.findMany({
-          where: { userId },
-          select: { id: true },
-        });
-        if (sessions.length > 0) {
-          await tx.auditLog.deleteMany({ where: { sessionId: { in: sessions.map((session) => session.id) } } });
-        }
-      };
+      // FERPA disclosure-accounting tombstone: audit and data-access rows are
+      // evidence of who accessed/disclosed student records and must survive
+      // account deletion. Detaching (actorId → null, FK is ON DELETE SET NULL)
+      // plus redacting personal `details` preserves the trail (action, target,
+      // school, timestamps) without retaining the deleted user's PII. The
+      // actorHash is a one-way digest of the deleted user id so rows from the
+      // same deleted account stay correlatable without storing PII.
+      // Session- and signup-linked audit rows are NOT deleted either: their
+      // FKs (AuditLog.sessionId, BeneficiaryAuditLog.signupId) are already
+      // ON DELETE SET NULL, so deleting the user's sessions/signups below
+      // detaches those rows automatically while keeping the evidence.
+      const accountDeleteTombstone = JSON.stringify({
+        tombstoned: "account-deleted",
+        actorHash: crypto.createHash("sha256").update(userId).digest("hex"),
+      });
 
-      const deleteUserBeneficiaryAuditLogs = async () => {
-        const signups = await tx.beneficiarySignup.findMany({
-          where: { studentId: userId },
-          select: { id: true },
+      const tombstoneOwnAuditTrail = async () => {
+        await tx.auditLog.updateMany({
+          where: { actorId: userId },
+          data: { actorId: null, details: accountDeleteTombstone },
         });
-        if (signups.length > 0) {
-          await tx.beneficiaryAuditLog.deleteMany({ where: { signupId: { in: signups.map((signup) => signup.id) } } });
-        }
+        await tx.dataAccessLog.updateMany({
+          where: { actorId: userId },
+          data: { actorId: null, details: accountDeleteTombstone },
+        });
       };
 
       const deleteInterventionMessagesForCampaigns = async (campaignIds: string[]) => {
@@ -1216,7 +1224,24 @@ router.delete("/account", authenticate, async (req: Request, res: Response) => {
         await tx.integrationSyncJob.deleteMany({ where: { schoolId } });
         await tx.integrationExternalMapping.deleteMany({ where: { schoolId } });
         await tx.integrationConnection.deleteMany({ where: { schoolId } });
-        await tx.dataAccessLog.deleteMany({ where: { schoolId } });
+        // Disclosure-accounting tombstone (same policy as the account
+        // self-delete path above): school-wide data-access rows are evidence
+        // of who accessed/disclosed student records and must survive school
+        // deletion. Detach the deleted school (schoolId → null, the column is
+        // a nullable scalar with no FK) and redact personal `details` so the
+        // trail (action, actor, target, timestamps) outlives the school
+        // without retaining PII. The schoolHash is a one-way digest of the
+        // deleted school id so rows from the same school stay correlatable.
+        await tx.dataAccessLog.updateMany({
+          where: { schoolId },
+          data: {
+            schoolId: null,
+            details: JSON.stringify({
+              tombstoned: "school-deleted",
+              schoolHash: crypto.createHash("sha256").update(schoolId).digest("hex"),
+            }),
+          },
+        });
 
         if (cohortIds.length > 0) {
           await tx.integrationExternalMapping.deleteMany({
@@ -1263,13 +1288,9 @@ router.delete("/account", authenticate, async (req: Request, res: Response) => {
         await tx.school.delete({ where: { id: schoolId } });
       };
 
-      // Delete audit logs created by this user
-      await tx.auditLog.deleteMany({ where: { actorId: userId } });
-      await deleteUserServiceSessionAuditLogs();
-      await deleteUserBeneficiaryAuditLogs();
-
-      // Delete personal data
-      await tx.dataAccessLog.deleteMany({ where: { actorId: userId } });
+      // Tombstone (never wipe) the audit / data-access rows created by this
+      // user — see above. All other personal rows are still hard-deleted.
+      await tombstoneOwnAuditTrail();
       await tx.notification.deleteMany({ where: { userId } });
       await tx.savedOpportunity.deleteMany({ where: { userId } });
       await tx.studentGroupMember.deleteMany({ where: { studentId: userId } });

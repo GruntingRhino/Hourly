@@ -380,3 +380,371 @@ test("School student list page — WCAG 2.1 AA", async ({ page }) => {
     `Critical/serious violations on School Student List: ${[...critical, ...serious].map((v) => v.id).join(", ")}`
   ).toHaveLength(0);
 });
+
+// ─── 13. Groups Remove-Hours dialog — keyboard trap, Escape, focus return ────
+//
+// Phase 1 of the accessibility remediation (REPORT F-02): the Groups
+// Remove-Hours modal is the single pilot consumer of the shared
+// `client/src/components/Dialog.tsx` primitive. Dialog contract under test:
+// role="dialog", aria-modal="true", accessible name from the visible heading,
+// initial focus inside the dialog, Tab/Shift+Tab trapped inside, Escape
+// closes, and focus returns to the trigger; plus an axe critical/serious gate
+// with the dialog open.
+//
+// The "Remove Hours" trigger only renders for sessions with
+// verificationStatus === "APPROVED", which the QA seed does not guarantee, so
+// the per-student history response is stubbed at the network layer
+// (page.route). The dialog under test is the real client component; only the
+// session row is synthetic. Opening the dialog, pressing Escape, and pressing
+// Cancel perform no network writes, so no seed state is mutated.
+test("Groups Remove-Hours dialog — keyboard trap, Escape, focus return, axe", async ({
+  page,
+}) => {
+  await loginAs(page, QA_SCHOOL_EMAIL);
+  await page.goto(`${BASE}/groups`);
+  await page.waitForLoadState("networkidle");
+
+  // Anti-vacuous: prove the Groups roster view actually rendered.
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible({
+    timeout: 15000,
+  });
+  await expect(page.getByText("Students in queue")).toBeVisible();
+
+  // The per-student history behind the trigger is stubbed: one APPROVED
+  // session renders exactly one keyboard-reachable "Remove Hours" button.
+  // Registered before selecting a student — the history loads on detail mount.
+  await page.route("**/api/reports/student*", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        sessions: [
+          {
+            id: "qa-approved-session-1",
+            totalHours: 3,
+            verificationStatus: "APPROVED",
+            opportunity: { title: "QA Park Cleanup" },
+          },
+        ],
+      }),
+    });
+  });
+
+  // Student rows are buttons whose accessible name contains the student email.
+  const firstStudent = page.getByRole("button", { name: /@/ }).first();
+  await expect(
+    firstStudent,
+    "Groups roster rendered no student rows, so the Remove-Hours trigger cannot be reached"
+  ).toBeVisible({ timeout: 15000 });
+  await firstStudent.click();
+
+  const trigger = page.getByRole("button", { name: "Remove Hours" }).first();
+  await expect(
+    trigger,
+    "Student detail rendered no Remove Hours trigger for the stubbed APPROVED session"
+  ).toBeVisible({ timeout: 15000 });
+
+  // Keyboard-only open: focus the trigger, activate with Enter.
+  await trigger.focus();
+  await page.keyboard.press("Enter");
+
+  // role + modal + labelled title (accessible name resolves via aria-labelledby).
+  const dialog = page.getByRole("dialog", { name: "Remove Verified Hours" });
+  await expect(dialog).toBeVisible({ timeout: 10000 });
+  await expect(dialog).toHaveAttribute("aria-modal", "true");
+
+  // Initial focus lands on the reason field inside the dialog.
+  const reason = page.getByLabel("Reason (optional)");
+  await expect(reason).toBeFocused();
+
+  // Tab cycles only among the dialog's three focusables (reason, Remove, Cancel).
+  const dialogNames = new Set(["Reason (optional)", "Remove Hours", "Cancel"]);
+  for (let i = 0; i < 6; i++) {
+    await page.keyboard.press("Tab");
+    const name = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      return el ? ((el.getAttribute("aria-label") || el.textContent) ?? "").trim() : "";
+    });
+    expect(
+      dialogNames.has(name),
+      `Tab stop ${i + 1} escaped the dialog (focused: "${name}")`
+    ).toBe(true);
+  }
+
+  // Shift+Tab from the first element wraps to the last (Cancel).
+  await reason.focus();
+  await page.keyboard.press("Shift+Tab");
+  await expect(page.getByRole("button", { name: "Cancel" })).toBeFocused();
+
+  // Axe gate with the dialog open.
+  const { critical, serious } = await runAxe(page, "Groups Remove-Hours dialog");
+  expect(
+    critical.concat(serious),
+    `Critical/serious violations with Remove-Hours dialog open: ${[...critical, ...serious].map((v) => v.id).join(", ")}`
+  ).toHaveLength(0);
+
+  // Escape closes and focus returns to the trigger.
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden({ timeout: 5000 });
+  await expect(trigger).toBeFocused();
+});
+
+// ─── 14. Login — keyboard focus indicator + empty-submit error focus ──────
+//
+// Phase 2 of the accessibility remediation (REPORT F-05 focus-visible
+// system, F-10 error association). Fully client-side: the empty submit is
+// rejected by Login's local validation (no network request), which sets
+// field errors and moves focus to the first invalid field
+// (`client/src/pages/Login.tsx:89-103`). The focus-visible assertion below
+// is a hard gate on the new `:focus-visible` rule in
+// `client/src/index.css` — it fails while `focus:outline-none` utilities
+// leave keyboard focus invisible.
+test("Login — visible keyboard focus and error focus management, axe", async ({
+  page,
+}) => {
+  await page.goto(`${BASE}/login`);
+  await page.waitForLoadState("networkidle");
+
+  // Anti-vacuous: prove the login form actually rendered.
+  await expect(
+    page.getByRole("heading", { name: "Welcome back" })
+  ).toBeVisible({ timeout: 15000 });
+  const email = page.getByLabel("Email");
+  const password = page.getByLabel("Password");
+  await expect(email).toBeVisible();
+  await expect(password).toBeVisible();
+
+  // Keyboard-only to the email field (tab order per test 3: logo → email).
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Tab");
+  await expect(email).toBeFocused();
+
+  // The keyboard-focused field must show a non-zero outline: the
+  // `:focus-visible` rule, not the UA default (Login inputs carry
+  // `focus:outline-none`, so without the remediation this is 0px).
+  const outline = await page.evaluate(() => {
+    const el = document.activeElement as HTMLElement | null;
+    if (!el) return { width: "none", style: "none" };
+    const computed = window.getComputedStyle(el);
+    return {
+      width: computed.getPropertyValue("outline-width"),
+      style: computed.getPropertyValue("outline-style"),
+    };
+  });
+  expect(
+    outline.width,
+    `keyboard-focused email field has no visible outline (width: "${outline.width}", style: "${outline.style}")`
+  ).not.toBe("0px");
+  expect(outline.style).not.toBe("none");
+
+  // Keyboard-only empty submit: focus Sign In, activate with Enter.
+  await page.getByRole("button", { name: "Sign In" }).focus();
+  await page.keyboard.press("Enter");
+
+  // Inline error linked to the field + focus moved to the first error.
+  await expect(page.getByText("Enter your email address.")).toBeVisible();
+  await expect(email).toBeFocused();
+  await expect(email).toHaveAttribute("aria-invalid", "true");
+  await expect(email).toHaveAttribute("aria-describedby", "login-email-error");
+
+  const { critical, serious } = await runAxe(page, "Login error state");
+  expect(
+    critical.concat(serious),
+    `Critical/serious violations on Login error state: ${[...critical, ...serious].map((v) => v.id).join(", ")}`
+  ).toHaveLength(0);
+});
+
+// ─── 15. Browse category filter — combobox keyboard semantics ─────────────
+//
+// Phase 2 (REPORT F-07 combobox, F-09 labels). The category options always
+// include the 29 predefined taxonomy entries
+// (`client/src/lib/opportunityCategories.ts:55-60`), so this flow is
+// seed-independent and performs no writes: typing only filters client-side.
+test("Browse category filter — combobox label, activedescendant, keyboard commit, axe", async ({
+  page,
+}) => {
+  await loginAs(page, QA_STUDENT_EMAIL);
+  await page.goto(`${BASE}/browse`);
+  await page.waitForLoadState("networkidle");
+
+  // Anti-vacuous: prove the browse view actually rendered.
+  await expect(
+    page.getByRole("heading", { name: "Browse Opportunities" })
+  ).toBeVisible({ timeout: 15000 });
+
+  // F-09: both filter controls expose accessible names (previously
+  // placeholder-only).
+  const search = page.getByLabel("Search opportunities, organizations, or categories");
+  await expect(search).toBeVisible();
+  const combo = page.getByRole("combobox", { name: "Filter by category" });
+  await expect(combo).toBeVisible();
+
+  // Keyboard-only open: focus expands the listbox.
+  await combo.focus();
+  await expect(combo).toHaveAttribute("aria-expanded", "true");
+  const listbox = page.getByRole("listbox");
+  await expect(listbox).toBeVisible();
+
+  // The highlighted option is exposed via aria-activedescendant.
+  // (Located by id-attribute selector: React useId values contain colons,
+  // which break `#id` CSS lookups, and CSS.escape is a browser-only API.)
+  const firstDescendant = await combo.getAttribute("aria-activedescendant");
+  expect(
+    firstDescendant,
+    "combobox exposes no aria-activedescendant when open"
+  ).toBeTruthy();
+  const firstOption = page.locator(`[id="${firstDescendant}"]`);
+  await expect(firstOption).toHaveAttribute("role", "option");
+
+  // ArrowDown moves the highlight (activedescendant tracks it).
+  await page.keyboard.press("ArrowDown");
+  const secondDescendant = await combo.getAttribute("aria-activedescendant");
+  expect(secondDescendant).toBeTruthy();
+  expect(
+    secondDescendant,
+    "ArrowDown did not move the combobox highlight"
+  ).not.toBe(firstDescendant);
+
+  // Typing filters, Enter commits the highlighted match ("Environment").
+  await combo.fill("env");
+  await expect(combo).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("Enter");
+  await expect(combo).toHaveValue("Environment");
+
+  // The clear button names the field it clears (previously "Clear selection").
+  const clear = page.getByRole("button", { name: "Clear Filter by category" });
+  await expect(clear).toBeVisible();
+
+  // Escape closes the listbox; the committed value is kept.
+  await page.keyboard.press("Escape");
+  await expect(combo).toHaveAttribute("aria-expanded", "false");
+  await expect(combo).toHaveValue("Environment");
+
+  const { critical, serious } = await runAxe(page, "Browse combobox committed");
+  expect(
+    critical.concat(serious),
+    `Critical/serious violations on Browse with committed filter: ${[...critical, ...serious].map((v) => v.id).join(", ")}`
+  ).toHaveLength(0);
+});
+
+// ─── 16. School register wizard — labels, combobox, toggle, errors ───────
+//
+// Phase 2 (REPORT F-08 register dropdown, F-09/F-10 labels/errors). Public
+// route, no login. Reaches the search step through the email path's
+// client-side step transitions; the only requests issued are read-only
+// directory lookups (domain suggestions + school search), so no seed state
+// is created or mutated — account creation happens only at the later
+// contact-step submit, which this test never performs.
+test("School register — labelled fields, search combobox, password toggle, axe", async ({
+  page,
+}) => {
+  await page.goto(`${BASE}/school/register`);
+  await page.waitForLoadState("networkidle");
+
+  // Anti-vacuous: prove the wizard actually rendered.
+  await expect(
+    page.getByRole("heading", { name: "Register Your School" })
+  ).toBeVisible({ timeout: 15000 });
+
+  await page.getByRole("button", { name: "Register with email & password" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Create your account" })
+  ).toBeVisible({ timeout: 10000 });
+
+  // F-09: labels are associated via htmlFor (previously wrapping-only, so
+  // getByLabel could not resolve them).
+  await expect(page.getByLabel("Full Name")).toBeVisible();
+  await expect(page.getByLabel("School Email")).toBeVisible();
+  const password = page.getByLabel("Password");
+  await expect(password).toBeVisible();
+
+  // F-08: show-password is keyboard-reachable with pressed state
+  // (previously tabIndex={-1}, reachable by mouse only, stateless).
+  const toggle = page.getByRole("button", { name: "Show password" });
+  await expect(toggle).toBeVisible();
+  await toggle.focus();
+  await expect(toggle).toBeFocused();
+  await page.keyboard.press("Space");
+  await expect(
+    page.getByRole("button", { name: "Hide password" })
+  ).toBeVisible();
+  await expect(toggle).toHaveAttribute("aria-pressed", "true");
+  await page.keyboard.press("Space");
+  await expect(
+    page.getByRole("button", { name: "Show password" })
+  ).toBeVisible();
+
+  // F-08: password rules are a live checklist, not color-only.
+  await password.fill("Aa1!aaaa");
+  await expect(page.getByText("At least 8 characters")).toBeVisible();
+
+  // Advance to the search step (read-only domain-suggestion lookup only).
+  await page.getByLabel("Full Name").fill("QA A11y");
+  await page.getByLabel("School Email").fill("qa-a11y@example.edu");
+  await page.getByRole("button", { name: /Find Your School/ }).click();
+  await expect(
+    page.getByRole("heading", { name: "Find Your School" })
+  ).toBeVisible({ timeout: 15000 });
+
+  // F-08/F-09: search combobox semantics + labelled companions.
+  const schoolSearch = page.getByRole("combobox", {
+    name: "Search for your school by name or city",
+  });
+  await expect(schoolSearch).toBeVisible();
+  await expect(schoolSearch).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByLabel("Filter schools by state")).toBeVisible();
+  await expect(page.getByLabel("Enter school name manually")).toBeVisible();
+
+  const { critical, serious } = await runAxe(page, "School register search");
+  expect(
+    critical.concat(serious),
+    `Critical/serious violations on school register search: ${[...critical, ...serious].map((v) => v.id).join(", ")}`
+  ).toHaveLength(0);
+});
+
+// ─── 17. Staff attendance QR issuance — labels, empty state, axe ────────────
+//
+// Read-only: logs in as school staff, opens /attendance-qr, and asserts the
+// labelled session/TTL controls (or the empty state when no session awaits
+// check-in), then runs the axe critical/serious gate. The Issue button is
+// never activated — minting a code writes an AttendanceQrToken row, so no
+// seed state is created or mutated here.
+test("Attendance QR issuance — labelled controls, empty state, axe", async ({
+  page,
+}) => {
+  await loginAs(page, QA_SCHOOL_EMAIL);
+  await page.goto(`${BASE}/attendance-qr`);
+  await page.waitForLoadState("networkidle");
+
+  // Anti-vacuous: prove the issuance page actually rendered.
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Attendance QR codes" })
+  ).toBeVisible({ timeout: 15000 });
+
+  const emptyState = page.getByRole("heading", {
+    name: "No sessions awaiting check-in",
+  });
+  const sessionSelect = page.getByLabel("Session awaiting check-in");
+
+  if (await emptyState.isVisible()) {
+    // Empty state: the only action is a real link, keyboard-reachable.
+    const cta = page.getByRole("link", { name: "View cohorts" });
+    await expect(cta).toBeVisible();
+    await cta.focus();
+    await expect(cta).toBeFocused();
+  } else {
+    // Issuance form: native labelled selects + a named submit button.
+    await expect(sessionSelect).toBeVisible({ timeout: 10000 });
+    await expect(page.getByLabel("Code lifetime")).toBeVisible();
+    const issue = page.getByRole("button", { name: "Issue attendance code" });
+    await expect(issue).toBeVisible();
+    await issue.focus();
+    await expect(issue).toBeFocused();
+  }
+
+  const { critical, serious } = await runAxe(page, "Attendance QR issuance");
+  expect(
+    critical.concat(serious),
+    `Critical/serious violations on attendance QR issuance: ${[...critical, ...serious].map((v) => v.id).join(", ")}`
+  ).toHaveLength(0);
+});

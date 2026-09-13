@@ -308,7 +308,7 @@ test("issued-code panel renders event + expiry + code only, never student PII", 
   assert.doesNotMatch(panel, /user\.(name|email|id)/, "panel must not read user identity");
 });
 
-test("issuance route is mounted for school roles, nav exposes it, no new QR-image dep", () => {
+test("issuance route is mounted for school roles and public QR display is isolated", () => {
   assert.ok(
     appRoutesSource.indexOf("SCHOOL_ROLES.includes") <
       appRoutesSource.indexOf('path="/attendance-qr"'),
@@ -328,9 +328,11 @@ test("issuance route is mounted for school roles, nav exposes it, no new QR-imag
     ...Object.keys(clientPackage.devDependencies ?? {}),
   ];
   assert.ok(
-    !allDeps.some((name) => /qr-?code/i.test(name)),
-    `no QR-image dependency may be added for presentation (found: ${allDeps.join(", ")})`,
+    allDeps.includes("qrcode"),
+    `the standalone display must use the pinned qrcode package (found: ${allDeps.join(", ")})`,
   );
+  assert.match(appRoutesSource, /location\.pathname === "\/attendance-share"/);
+  assert.match(appRoutesSource, /PublicAttendanceQr/);
 });
 
 test("student QR check-in route is unchanged by the staff issuance UI", () => {

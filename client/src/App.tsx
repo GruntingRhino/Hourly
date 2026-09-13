@@ -45,6 +45,7 @@ const SchoolBeneficiaries = lazy(() => import("./pages/school/Beneficiaries"));
 const BeneficiaryDiscover = lazy(() => import("./pages/school/Discover"));
 const SchoolOpportunities = lazy(() => import("./pages/school/SchoolOpportunities"));
 const AttendanceQr = lazy(() => import("./pages/school/AttendanceQr"));
+const PublicAttendanceQr = lazy(() => import("./pages/PublicAttendanceQr"));
 const SchoolSelfSubmissions = lazy(() => import("./pages/school/SelfSubmissions"));
 const SchoolMessages = lazy(() => import("./pages/school/Messages"));
 const SchoolSettings = lazy(() => import("./pages/school/Settings"));
@@ -67,6 +68,16 @@ function AppRoutes() {
     isSchoolAdminLike && user.school?.onboardingComplete === false;
   const pendingSchoolApproval =
     user?.role === "SCHOOL_ADMIN" && user.school?.ownershipStatus === "PENDING";
+
+  // This capability page deliberately bypasses auth/layout routing. The
+  // bearer token authorizes only the QR display and never creates a session.
+  if (location.pathname === "/attendance-share") {
+    return (
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+        <PublicAttendanceQr />
+      </Suspense>
+    );
+  }
 
   // Age eligibility is a STUDENT-only requirement. The role check is not
   // redundant with the server flag: AuthProvider optimistically renders the

@@ -8,6 +8,7 @@ import { logDataAccess } from "../lib/dataAccessLog";
 import { buildAnonymousVolunteerLabel } from "../lib/privacy";
 import crypto from "node:crypto";
 import { createAttendanceQrToken, hashAttendanceQrToken, parseAttendanceQrToken } from "../lib/attendanceQr";
+import { buildAttendanceQrSharePath } from "../lib/attendanceQrShare";
 import { isPrismaKnownRequestError } from "../lib/prismaErrors";
 import { detectSignatureMime } from "../lib/signatureStorage";
 import {
@@ -48,7 +49,11 @@ router.post("/:id/qr-token", authenticate, requireRole("ORG_ADMIN", "SCHOOL_ADMI
     const parsed = parseAttendanceQrToken(raw, process.env.ATTENDANCE_QR_SECRET || "");
     if (!parsed) return res.status(500).json({ error: "Could not create attendance token" });
     await prisma.attendanceQrToken.create({ data: { id: parsed.tokenId, opportunityId: parsed.opportunityId, schoolId: session.schoolId, createdById: req.user!.userId, tokenHash: hashAttendanceQrToken(raw), expiresAt: parsed.expiresAt } });
-    return res.status(201).json({ token: raw, expiresAt: parsed.expiresAt });
+    return res.status(201).json({
+      token: raw,
+      expiresAt: parsed.expiresAt,
+      sharePath: buildAttendanceQrSharePath(raw),
+    });
   } catch (err) { console.error("Issue attendance QR error:", err); return res.status(500).json({ error: "Internal server error" }); }
 });
 

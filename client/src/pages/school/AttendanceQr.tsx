@@ -34,6 +34,7 @@ interface IssuedCode {
   opportunityDate: string;
   token: string;
   expiresAt: string;
+  sharePath: string;
 }
 
 const TTL_OPTIONS = [
@@ -70,6 +71,7 @@ export default function AttendanceQr() {
   const [issueError, setIssueError] = useState("");
   const [issued, setIssued] = useState<IssuedCode | null>(null);
   const [copyFeedback, setCopyFeedback] = useState("");
+  const [shareFeedback, setShareFeedback] = useState("");
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -124,7 +126,7 @@ export default function AttendanceQr() {
     setIssueError("");
     setCopyFeedback("");
     try {
-      const result = await api.post<{ token: string; expiresAt: string }>(
+      const result = await api.post<{ token: string; expiresAt: string; sharePath: string }>(
         `/sessions/${encodeURIComponent(selectedSession.id)}/qr-token`,
         { ttlSeconds },
       );
@@ -134,12 +136,28 @@ export default function AttendanceQr() {
         opportunityDate: selectedSession.opportunity.date,
         token: result.token,
         expiresAt: result.expiresAt,
+        sharePath: result.sharePath,
       });
       setNow(Date.now());
     } catch (err: unknown) {
       setIssueError(getErrorMessage(err, "Could not issue an attendance code. Please try again."));
     } finally {
       setIssuing(false);
+    }
+  };
+
+  const shareUrl = issued ? new URL(issued.sharePath, window.location.origin).toString() : "";
+
+  const copyShareLink = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareFeedback("Share link copied. It opens only the QR display page.");
+    } catch {
+      const field = document.getElementById("attendance-share-link") as HTMLInputElement | null;
+      field?.focus();
+      field?.select();
+      setShareFeedback("Copy unavailable — the link is selected, press Ctrl+C to copy.");
     }
   };
 
@@ -317,6 +335,28 @@ export default function AttendanceQr() {
             </div>
           ) : (
             <>
+              <div className="mt-4 rounded-[3px] border border-[var(--in-b)] bg-[var(--in-bg)] p-4">
+                <h3 className="text-sm font-semibold text-[var(--text)]">Send this QR page</h3>
+                <p className="mt-1 text-xs text-[var(--text-sec)]">
+                  Share this short-lived link with the attendance helper. It opens a standalone QR display only — no GoodHours login or dashboard access.
+                </p>
+                <input
+                  id="attendance-share-link"
+                  aria-label="Attendance QR share link"
+                  readOnly
+                  value={shareUrl}
+                  onFocus={(e) => e.target.select()}
+                  className="mt-3 w-full border border-[var(--border)] rounded-[3px] px-3 py-2 text-xs font-mono bg-[var(--bg)] text-[var(--text)]"
+                />
+                <button
+                  type="button"
+                  onClick={copyShareLink}
+                  className="mt-2 px-4 py-2 bg-[var(--action)] text-white rounded-[2px] text-sm font-medium hover:opacity-85"
+                >
+                  Copy share link
+                </button>
+                {shareFeedback && <p role="status" className="mt-2 text-xs text-[var(--ok-t)]">{shareFeedback}</p>}
+              </div>
               <label htmlFor="attendance-code-value" className="block mt-4 text-sm font-medium text-[var(--text)]">
                 Attendance code — share with students at the event
               </label>

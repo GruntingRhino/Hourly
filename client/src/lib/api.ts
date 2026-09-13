@@ -13,14 +13,34 @@ export class ApiError extends Error {
   }
 }
 
+function friendlyStatusMessage(status: number): string {
+  if (status === 0) return "We couldn't reach GoodHours. Check your connection and try again.";
+  if (status === 401) return "Your session has expired. Please sign in again.";
+  if (status === 403) return "You don't have permission to do that.";
+  if (status === 404) return "That item or link is no longer available.";
+  if (status === 409) return "This action could not be completed because the item has changed.";
+  if (status === 429) return "Too many attempts. Please wait a moment and try again.";
+  if (status >= 500) return "GoodHours is temporarily unavailable. Please try again.";
+  return "We couldn't complete that request. Please try again.";
+}
+
+function isRawStatusMessage(message: string): boolean {
+  return /^(?:request failed|http error|error)\s*:?\s*\d{3}\b/i.test(message.trim());
+}
+
 export function getErrorMessage(error: unknown, fallback: string): string {
-  return error instanceof Error && error.message ? error.message : fallback;
+  if (!(error instanceof Error) || !error.message) return fallback;
+  if (error instanceof ApiError && isRawStatusMessage(error.message)) {
+    return friendlyStatusMessage(error.status);
+  }
+  return error.message;
 }
 
 function getResponseErrorMessage(body: unknown, fallback: string): string {
-  return typeof body === "object" && body !== null && "error" in body
+  const message = typeof body === "object" && body !== null && "error" in body
     ? String(body.error)
     : fallback;
+  return isRawStatusMessage(message) ? fallback : message;
 }
 
 function getTimeoutMs(): number {
@@ -68,7 +88,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
-    const message = getResponseErrorMessage(body, `Request failed: ${res.status}`);
+    const message = getResponseErrorMessage(body, friendlyStatusMessage(res.status));
     throw new ApiError(message, res.status, body);
   }
 
@@ -88,7 +108,7 @@ async function requestBlob(path: string, options?: RequestInit): Promise<Blob> {
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
-    const message = getResponseErrorMessage(body, `Request failed: ${res.status}`);
+    const message = getResponseErrorMessage(body, friendlyStatusMessage(res.status));
     throw new ApiError(message, res.status, body);
   }
 

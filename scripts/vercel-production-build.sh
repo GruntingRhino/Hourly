@@ -16,7 +16,8 @@ if [[ "$VERCEL_ENV" == "production" ]]; then
     echo "Refusing migration: Vercel project identity is not GoodHours production." >&2
     exit 1
   }
-  [[ "${VERCEL_GIT_COMMIT_SHA:-}" =~ ^[0-9a-f]{40}$ ]] || {
+  commit_sha="${VERCEL_GIT_COMMIT_SHA:-${VERCEL_GITHUB_COMMIT_SHA:-${VERCEL_GITLAB_COMMIT_SHA:-${VERCEL_BITBUCKET_COMMIT_SHA:-}}}}"
+  [[ "$commit_sha" =~ ^[0-9a-f]{40}$ ]] || {
     echo "Refusing migration: Vercel commit identity is missing or malformed." >&2
     exit 1
   }

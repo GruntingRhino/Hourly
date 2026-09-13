@@ -99,6 +99,14 @@ assert.equal(valid.status, 0, valid.stderr);
 assert.match(valid.stdout, /PRODUCTION_REVIEWED_HISTORY_MATCH=verified count=74/);
 assert.match(valid.stdout, /PRODUCTION_SCHEMA_MATCH=verified/);
 
+const githubSha = run({
+  ...productionBase,
+  VERCEL_GIT_COMMIT_SHA: '',
+  VERCEL_GITHUB_COMMIT_SHA: productionBase.VERCEL_GIT_COMMIT_SHA,
+}, true);
+assert.equal(githubSha.status, 0, githubSha.stderr);
+assert.match(githubSha.stdout, /PRODUCTION_SCHEMA_MATCH=verified/);
+
 const legacyEnum = fakeTools({ diff: '-- DropEnum\nDROP TYPE "UserRole";' });
 const legacyResult = run(productionBase, legacyEnum);
 assert.equal(legacyResult.status, 0, legacyResult.stderr);

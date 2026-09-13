@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import test from "node:test";
 
 import {
@@ -60,4 +62,12 @@ test("legacy flat name shape still resolves", () => {
 test("entries without any email still resolve empty (dropped downstream)", () => {
   const user: GoogleClassroomApiUser = { userId: "u4", profile: { id: "u4" } };
   assert.equal(resolveClassroomUserEmail(user), "");
+});
+
+test("OAuth reconnect clears stale sync state before the next Classroom sync", () => {
+  const source = fs.readFileSync(path.resolve(process.cwd(), "src/services/googleClassroomIntegration.ts"), "utf8");
+  const reconnect = source.slice(source.indexOf("export async function handleGoogleClassroomOAuthCallback"));
+  assert.match(reconnect, /lastSyncedAt:\s*null/);
+  assert.match(reconnect, /lastSyncStatus:\s*null/);
+  assert.match(reconnect, /lastSyncJobId:\s*null/);
 });

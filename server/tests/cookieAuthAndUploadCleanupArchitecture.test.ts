@@ -23,3 +23,9 @@ test("password rotation does not return the refreshed JWT to browser JavaScript"
   assert.match(passwordRoute, /setAuthCookie\(res, refreshedToken/);
   assert.doesNotMatch(passwordRoute, /json\(\{[^}]*token:\s*refreshedToken/);
 });
+
+test("student JWT cookies never outlive the 24-hour student token", () => {
+  assert.match(authRoute, /setAuthCookie\(res, token, \{ persistent: user\.role !== "STUDENT" \}\)/);
+  assert.match(authRoute, /setAuthCookie\(res, refreshedToken, \{ persistent: updated\.role !== "STUDENT" \}\)/);
+  assert.match(authRoute, /persistent: user\.role !== "STUDENT" && persistent/);
+});

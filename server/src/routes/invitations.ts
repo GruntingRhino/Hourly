@@ -137,7 +137,7 @@ router.post("/student/accept", publicInvitationLimiter, async (req: Request, res
     const user = acceptance.user;
 
     const jwtToken = signUserToken(user);
-    setAuthCookie(res, jwtToken, { persistent: true });
+    setAuthCookie(res, jwtToken, { persistent: user.role !== "STUDENT" });
 
     res.status(acceptance.created ? 201 : 200).json({
       token: jwtToken,
@@ -272,7 +272,7 @@ router.post("/beneficiary/accept", publicInvitationLimiter, async (req: Request,
 
     const { user } = acceptance;
     const jwtToken = signUserToken(user);
-    setAuthCookie(res, jwtToken, { persistent: true });
+    setAuthCookie(res, jwtToken, { persistent: user.role !== "STUDENT" });
 
     res.status(acceptance.created ? 201 : 200).json({
       token: jwtToken,
@@ -385,7 +385,7 @@ router.post("/beneficiary-admin/accept", publicInvitationLimiter, async (req: Re
       return user;
     });
     const jwtToken = signUserToken(user);
-    setAuthCookie(res, jwtToken, { persistent: true });
+    setAuthCookie(res, jwtToken, { persistent: user.role !== "STUDENT" });
     res.status(201).json({
       token: jwtToken,
       user: { id: user.id, email: user.email, name: user.name, role: user.role, beneficiaryId: user.beneficiaryId },

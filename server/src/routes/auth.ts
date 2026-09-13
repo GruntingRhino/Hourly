@@ -680,7 +680,7 @@ router.post("/login", publicAuthLimiter, loginIpLimiter, loginLimiter, async (re
     }
 
     const token = signUserToken(user);
-    setAuthCookie(res, token, { persistent: true });
+    setAuthCookie(res, token, { persistent: user.role !== "STUDENT" });
 
     const profile = await loadLoginProfile(user.id);
     const payload = buildLoginUserPayload(user, profile);
@@ -739,7 +739,7 @@ router.post("/session-pref", authenticate, async (req: Request, res: Response) =
       select: { id: true, email: true, role: true, tokenVersion: true },
     });
     if (!user) return res.status(401).json({ error: "Invalid or expired token" });
-    setAuthCookie(res, signUserToken(user), { persistent });
+    setAuthCookie(res, signUserToken(user), { persistent: user.role !== "STUDENT" && persistent });
     res.status(204).send();
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -901,7 +901,7 @@ router.put("/password", authenticate, async (req: Request, res: Response) => {
     });
 
     const refreshedToken = signUserToken(updated);
-    setAuthCookie(res, refreshedToken, { persistent: true });
+    setAuthCookie(res, refreshedToken, { persistent: updated.role !== "STUDENT" });
     res.json({ message: "Password changed successfully" });
   } catch (err) {
     if (err instanceof z.ZodError) {

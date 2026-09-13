@@ -55,7 +55,24 @@ console.log('PRODUCTION_SCHEMA_SOURCE_HASH=verified');
 NODE
 
   echo "PRODUCTION_MIGRATION_TARGET=goodhours:${VERCEL_PROJECT_ID}"
-  npx prisma migrate deploy --schema=server/prisma/schema.prisma
+  migration_output=''
+  migration_succeeded=false
+  for attempt in 1 2 3 4 5; do
+    if migration_output="$(npx prisma migrate deploy --schema=server/prisma/schema.prisma 2>&1)"; then
+      printf '%s\n' "$migration_output"
+      migration_succeeded=true
+      break
+    fi
+    if grep -qE 'P1002|advisory lock' <<<"$migration_output" && (( attempt < 5 )); then
+      printf 'Transient migration advisory-lock timeout; retrying (attempt %d/5).\n' "$attempt" >&2
+      printf '%s\n' "$migration_output" >&2
+      sleep $((attempt * 5))
+    else
+      printf '%s\n' "$migration_output" >&2
+      exit 1
+    fi
+  done
+  [[ "$migration_succeeded" == true ]] || exit 1
   npx prisma migrate status --schema=server/prisma/schema.prisma
   diff_output="$(npx prisma migrate diff --from-url "$DATABASE_URL" --to-schema-datamodel server/prisma/schema.prisma --script)"
   normalized_diff="$(printf '%s' "$diff_output" | sed '/^[[:space:]]*$/d')"

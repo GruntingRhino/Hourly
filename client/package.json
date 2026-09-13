@@ -13,6 +13,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "typecheck": "tsc -b --pretty false",
     "lint": "eslint . --max-warnings 0",
     "security:verify-no-rsc": "node scripts/verify-no-rsc.mjs",
     "security:verify-react-router-rsc-advisory": "node scripts/verify-react-router-rsc-advisory.mjs",

@@ -107,6 +107,15 @@ const githubSha = run({
 assert.equal(githubSha.status, 0, githubSha.stderr);
 assert.match(githubSha.stdout, /PRODUCTION_SCHEMA_MATCH=verified/);
 
+const pinnedSha = run({
+  ...productionBase,
+  VERCEL_GIT_COMMIT_SHA: '',
+  VERCEL_GITHUB_COMMIT_SHA: '',
+  GOODHOURS_RELEASE_COMMIT_SHA: productionBase.VERCEL_GIT_COMMIT_SHA,
+}, true);
+assert.equal(pinnedSha.status, 0, pinnedSha.stderr);
+assert.match(pinnedSha.stdout, /PRODUCTION_SCHEMA_MATCH=verified/);
+
 const legacyEnum = fakeTools({ diff: '-- DropEnum\nDROP TYPE "UserRole";' });
 const legacyResult = run(productionBase, legacyEnum);
 assert.equal(legacyResult.status, 0, legacyResult.stderr);

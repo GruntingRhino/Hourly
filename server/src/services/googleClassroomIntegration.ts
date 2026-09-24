@@ -17,10 +17,10 @@ import {
   normalizeSelectedExternalCourseIds,
 } from "../lib/lmsOutboundSecurity";
 import { getGoogleClassroomMockDataset, type GoogleClassroomMockDataset, type GoogleClassroomMockScenario } from "./googleClassroomMock";
-import { isProdLike, isPubliclyDeployed } from "../lib/isProdLike";
+import { isPubliclyDeployed } from "../lib/isProdLike";
 import { assertOAuthAdministrator, claimOAuthState, createOAuthState, storeOAuthState } from "../lib/oauthState";
 
-const GOOGLE_CLASSROOM_ENABLE_MOCK = process.env.GOOGLE_CLASSROOM_ENABLE_MOCK === "true" || !isProdLike();
+const GOOGLE_CLASSROOM_ENABLE_MOCK = process.env.GOOGLE_CLASSROOM_ENABLE_MOCK === "true";
 const GOOGLE_CLASSROOM_REQUEST_TIMEOUT_MS = Number(process.env.GOOGLE_CLASSROOM_REQUEST_TIMEOUT_MS || 15000);
 const GOOGLE_CLASSROOM_PAGE_SIZE = Math.max(1, Math.min(100, Number(process.env.GOOGLE_CLASSROOM_PAGE_SIZE || 100)));
 const JWT_SECRET = process.env.JWT_SECRET as string;

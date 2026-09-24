@@ -14,7 +14,7 @@ function fakeTools({ diff = '-- This is an empty migration.', catalog = 'pass' }
   const calls = join(bin, 'calls');
   const diffFile = join(bin, 'diff');
   writeFileSync(diffFile, `${diff}\n`);
-  writeFileSync(join(bin, 'npx'), '#!/bin/sh\nprintf "%s\\n" "$*" >> "$CALLS"\ncase "$*" in *"migrate diff"*) cat "$DIFF_FILE";; *"db execute"*) test "$CATALOG" = fail && exit 1 || exit 0;; esac\n');
+  writeFileSync(join(bin, 'npx'), '#!/bin/sh\nprintf "%s\\n" "$*" >> "$CALLS"\ncase "$*" in *"migrate diff"*) cat "$DIFF_FILE";; *"db execute"*) cat >/dev/null; test "$CATALOG" = fail && exit 1 || exit 0;; esac\n');
   writeFileSync(join(bin, 'npm'), '#!/bin/sh\nprintf "%s\\n" "npm $*" >> "$CALLS"\n');
   chmodSync(join(bin, 'npx'), 0o755);
   chmodSync(join(bin, 'npm'), 0o755);
@@ -70,6 +70,25 @@ for (const [label, env, expected] of [
   assert.notEqual(result.status, 0, label);
   assert.match(result.stderr, expected, label);
 }
+
+const isolatedDevBase = {
+  ...productionBase,
+  VERCEL_PROJECT_ID: 'prj_4EDHs3MHJR4dcOzQJAFNAXk9rYsu',
+  DATABASE_URL: 'postgresql://test:fake@ep-summer-flower-avc14pih.c-11.us-east-1.aws.neon.tech/neondb',
+};
+for (const [label, url] of [
+  ['production endpoint', 'postgresql://test:fake@ep-wild-sun-aisc60p4.c-11.us-east-1.aws.neon.tech/neondb'],
+  ['other database', 'postgresql://test:fake@ep-summer-flower-avc14pih.c-11.us-east-1.aws.neon.tech/other'],
+  ['missing credentials', 'postgresql://ep-summer-flower-avc14pih.c-11.us-east-1.aws.neon.tech/neondb'],
+]) {
+  const result = run({ ...isolatedDevBase, DATABASE_URL: url }, true);
+  assert.notEqual(result.status, 0, label);
+  assert.match(result.stderr, /not the isolated Neon project/, label);
+}
+const isolatedDev = run(isolatedDevBase, true);
+assert.equal(isolatedDev.status, 0, isolatedDev.stderr);
+assert.match(isolatedDev.stdout, /PRODUCTION_MIGRATION_TARGET=hourly-dev:prj_4EDHs3MHJR4dcOzQJAFNAXk9rYsu/);
+assert.match(isolatedDev.stdout, /PRODUCTION_SCHEMA_MATCH=verified/);
 
 const originalManifest = readFileSync(manifestPath, 'utf8');
 try {

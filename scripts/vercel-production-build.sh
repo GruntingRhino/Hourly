@@ -12,10 +12,28 @@ esac
 : "${VERCEL_PROJECT_ID:?Refusing build: VERCEL_PROJECT_ID is missing}"
 
 if [[ "$VERCEL_ENV" == "production" ]]; then
-  test "$VERCEL_PROJECT_ID" = "prj_ZP9k4HEjRT8sMEKzsvcSsHXVMVai" || {
-    echo "Refusing migration: Vercel project identity is not GoodHours production." >&2
-    exit 1
+  case "$VERCEL_PROJECT_ID" in
+    prj_ZP9k4HEjRT8sMEKzsvcSsHXVMVai) migration_target=goodhours ;;
+    prj_4EDHs3MHJR4dcOzQJAFNAXk9rYsu)
+      migration_target=hourly-dev
+      # A production-target build in the dev project must never migrate the
+      # real production database, regardless of what Vercel variables contain.
+      node - <<'NODE'
+try {
+  const url = new URL(process.env.DATABASE_URL || '');
+  if (!['postgres:', 'postgresql:'].includes(url.protocol) ||
+      url.hostname !== 'ep-summer-flower-avc14pih.c-11.us-east-1.aws.neon.tech' ||
+      url.pathname !== '/neondb' || !url.username || !url.password) {
+    throw new Error('wrong staging database target');
   }
+} catch {
+  console.error('Refusing migration: hourly-dev database is not the isolated Neon project.');
+  process.exit(1);
+}
+NODE
+      ;;
+    *) echo "Refusing migration: Vercel project identity is not an approved migration target." >&2; exit 1 ;;
+  esac
   commit_sha="${VERCEL_GIT_COMMIT_SHA:-${VERCEL_GITHUB_COMMIT_SHA:-${VERCEL_GITLAB_COMMIT_SHA:-${VERCEL_BITBUCKET_COMMIT_SHA:-${GOODHOURS_RELEASE_COMMIT_SHA:-}}}}}"
   [[ "$commit_sha" =~ ^[0-9a-f]{40}$ ]] || {
     echo "Refusing migration: Vercel commit identity is missing or malformed." >&2
@@ -54,7 +72,7 @@ console.log(`PRODUCTION_REVIEWED_HISTORY_MATCH=verified count=${dirs.length}`);
 console.log('PRODUCTION_SCHEMA_SOURCE_HASH=verified');
 NODE
 
-  echo "PRODUCTION_MIGRATION_TARGET=goodhours:${VERCEL_PROJECT_ID}"
+  echo "PRODUCTION_MIGRATION_TARGET=${migration_target}:${VERCEL_PROJECT_ID}"
   migration_output=''
   migration_succeeded=false
   for attempt in 1 2 3 4 5; do

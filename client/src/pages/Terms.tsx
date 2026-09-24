@@ -29,11 +29,11 @@ export default function Terms() {
             Terms.
           </p>
           <p className="mt-3">
-            <strong>Age requirement:</strong> GoodHours is available only to users who are 13 or
- older. Users ages 13 through 17 should obtain parent or legal guardian permission before
+            <strong>Student age requirement:</strong> Student accounts are available only to students who are 13 or older.
+ Students ages 13 through 17 should obtain parent or legal guardian permission before
  using the Service. If you are a school administrator granting access, you are responsible
  for authorizing the enrollment and use of student information under your school's policies
- and applicable law.
+ and applicable law. School staff and partner administrators follow separate authorization requirements.
           </p>
         </>
       ),
@@ -77,8 +77,8 @@ export default function Terms() {
       content: (
         <>
           <p>
-            To use GoodHours you must be at least 13 years of age. School invitations do not create
-            an exception to this requirement. GoodHours does not ask users to provide a date of
+            Students must be at least 13 years of age to activate a student account. School invitations do not create
+            an exception to this student requirement. GoodHours does not ask students to provide a date of
             birth or identity document as part of this policy.
           </p>
           <p className="mt-3">

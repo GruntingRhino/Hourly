@@ -9,6 +9,7 @@ import { buildAnonymousVolunteerLabel } from "../lib/privacy";
 import crypto from "node:crypto";
 import { createAttendanceQrToken, hashAttendanceQrToken, parseAttendanceQrToken } from "../lib/attendanceQr";
 import { buildAttendanceQrSharePath } from "../lib/attendanceQrShare";
+import { isLegacyOpportunityQrWindowOpen } from "../lib/legacyQrWindow";
 import { isPrismaKnownRequestError } from "../lib/prismaErrors";
 import { detectSignatureMime } from "../lib/signatureStorage";
 import {
@@ -18,6 +19,40 @@ import {
 } from "../lib/cohortAccess";
 
 const router = Router();
+
+// Token-only handoff resolution for the phone-camera QR flow. The QR carries
+// only the signed opportunity-scoped token (in the /qr-checkin hash fragment);
+// it never embeds a sessionId, so one student's session cannot be addressed to
+// another student or school. The server derives the caller's OWN session via
+// ServiceSession @@unique([userId, opportunityId]) and enforces the same
+// tenant/state checks as redemption, without redeeming. The token travels in
+// the POST body (never a URL path/query) and is never logged.
+router.post("/qr-resolve", authenticate, requireRole("STUDENT"), async (req: Request, res: Response) => {
+  try {
+    const token = typeof req.body?.token === "string" ? req.body.token.trim() : "";
+    if (!token || token.length > 4096 || /\s/.test(token)) return res.status(400).json({ error: "An attendance code is required" });
+    const parsed = parseAttendanceQrToken(token, process.env.ATTENDANCE_QR_SECRET || "");
+    if (!parsed) return res.status(400).json({ error: "This attendance code is invalid or expired" });
+    const qr = await prisma.attendanceQrToken.findUnique({ where: { id: parsed.tokenId } });
+    if (!qr || qr.tokenHash !== hashAttendanceQrToken(token) || qr.revokedAt || qr.expiresAt <= new Date()) {
+      return res.status(400).json({ error: "This attendance code is invalid or expired" });
+    }
+    const session = await prisma.serviceSession.findUnique({
+      where: { userId_opportunityId: { userId: req.user!.userId, opportunityId: parsed.opportunityId } },
+      select: { id: true, schoolId: true, opportunityId: true, status: true,
+        opportunity: { select: { date: true, startTime: true, endTime: true } } },
+    });
+    if (!session) return res.status(404).json({ error: "No session found for this event on your account" });
+    if (qr.schoolId !== session.schoolId) return res.status(403).json({ error: "This code is not for your school" });
+    if (!["PENDING_CHECKIN", "COMMITTED"].includes(session.status)) {
+      return res.status(409).json({ error: "Your session is not awaiting check-in" });
+    }
+    if (!isLegacyOpportunityQrWindowOpen(session.opportunity)) {
+      return res.status(409).json({ error: "Attendance check-in is available from 30 minutes before the event starts through its end (Eastern time)" });
+    }
+    return res.json({ sessionId: session.id, opportunityId: session.opportunityId, expiresAt: qr.expiresAt.toISOString() });
+  } catch (err) { console.error("QR resolve error:", err); return res.status(500).json({ error: "Internal server error" }); }
+});
 
 // Legacy session QR attendance. The schema intentionally binds these tokens to
 // Opportunity/ServiceSession; beneficiary slots use their separate attendance path.
@@ -62,7 +97,8 @@ router.post("/:id/qr-checkin", authenticate, requireRole("STUDENT"), async (req:
     const token = typeof req.body?.token === "string" ? req.body.token : "";
     const parsed = parseAttendanceQrToken(token, process.env.ATTENDANCE_QR_SECRET || "");
     if (!parsed) return res.status(400).json({ error: "Invalid or expired attendance QR token" });
-    const session = await prisma.serviceSession.findUnique({ where: { id: req.params.id } });
+    const session = await prisma.serviceSession.findUnique({ where: { id: req.params.id },
+      include: { opportunity: { select: { date: true, startTime: true, endTime: true } } } });
     if (!session) return res.status(404).json({ error: "Session not found" });
     if (session.userId !== req.user!.userId) return res.status(403).json({ error: "Not your session" });
     if (parsed.opportunityId !== session.opportunityId) return res.status(403).json({ error: "Token is not for this opportunity" });
@@ -70,7 +106,9 @@ router.post("/:id/qr-checkin", authenticate, requireRole("STUDENT"), async (req:
     if (!qr || qr.tokenHash !== hashAttendanceQrToken(token) || qr.revokedAt || qr.expiresAt <= new Date()) return res.status(400).json({ error: "Invalid or expired attendance QR token" });
     if (qr.schoolId !== session.schoolId) return res.status(403).json({ error: "Token is not for this school" });
     if (!["PENDING_CHECKIN", "COMMITTED"].includes(session.status)) return res.status(409).json({ error: "Session is not awaiting check-in" });
+    if (!isLegacyOpportunityQrWindowOpen(session.opportunity)) return res.status(409).json({ error: "Attendance check-in is available from 30 minutes before the event starts through its end (Eastern time)" });
     const updated = await prisma.$transaction(async (tx) => {
+      if (!isLegacyOpportunityQrWindowOpen(session.opportunity)) throw new Error("QR_WINDOW_CLOSED");
       const claimedSession = await tx.serviceSession.updateMany({ where: { id: session.id, status: { in: ["PENDING_CHECKIN", "COMMITTED"] } }, data: { status: "CHECKED_IN" } });
       if (claimedSession.count !== 1) throw new Error("SESSION_STATE_CHANGED");
       const redemption = await tx.attendanceQrRedemption.create({ data: { tokenId: qr.id, studentId: req.user!.userId, sessionId: session.id } });
@@ -79,7 +117,7 @@ router.post("/:id/qr-checkin", authenticate, requireRole("STUDENT"), async (req:
       return result;
     });
     return res.json(updated);
-  } catch (err) { if (isPrismaKnownRequestError(err) && err.code === "P2002") return res.status(409).json({ error: "Attendance QR token already redeemed" }); if (err instanceof Error && err.message === "SESSION_STATE_CHANGED") return res.status(409).json({ error: "Session is not awaiting check-in" }); console.error("QR check-in error:", err); return res.status(500).json({ error: "Internal server error" }); }
+  } catch (err) { if (isPrismaKnownRequestError(err) && err.code === "P2002") return res.status(409).json({ error: "Attendance QR token already redeemed" }); if (err instanceof Error && err.message === "SESSION_STATE_CHANGED") return res.status(409).json({ error: "Session is not awaiting check-in" }); if (err instanceof Error && err.message === "QR_WINDOW_CLOSED") return res.status(409).json({ error: "Attendance check-in window has closed" }); console.error("QR check-in error:", err); return res.status(500).json({ error: "Internal server error" }); }
 });
 
 const upload = multer({

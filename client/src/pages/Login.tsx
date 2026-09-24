@@ -9,6 +9,23 @@ interface AuthResult {
   user: User;
 }
 
+const QR_RETURN_KEY = "qr-checkin-return";
+
+function loginDestination(params: URLSearchParams): string {
+  // Administrator invitations take precedence. Never follow an arbitrary
+  // returnTo parameter from the URL (open-redirect boundary).
+  if (params.has("adminInvitation")) return "/dashboard";
+  if (params.get("returnTo") === "/qr-checkin") return "/qr-checkin";
+  try {
+    if (window.sessionStorage.getItem(QR_RETURN_KEY) === "1") return "/qr-checkin";
+  } catch { /* Storage may be unavailable. */ }
+  return "/dashboard";
+}
+
+function clearQrReturn(): void {
+  try { window.sessionStorage.removeItem(QR_RETURN_KEY); } catch { /* ignore */ }
+}
+
 export default function Login() {
   const { login, loginWithToken, refreshUser, user } = useAuth();
   const navigate = useNavigate();
@@ -24,11 +41,12 @@ export default function Login() {
   const [devGoogleLoading, setDevGoogleLoading] = useState(false);
   const acceptingAdminInvitation = useRef(false);
   const justApproved = searchParams.get("approved") === "1";
+  const [destination] = useState(() => loginDestination(searchParams));
 
   useEffect(() => {
     if (!user || acceptingAdminInvitation.current) return;
     const token = searchParams.get("adminInvitation");
-    if (!token) { navigate("/dashboard", { replace: true }); return; }
+    if (!token) { clearQrReturn(); navigate(destination, { replace: true }); return; }
     acceptingAdminInvitation.current = true;
     api.post(`/beneficiaries/admin-invitations/${token}/accept`)
       .then(async () => { await refreshUser(); navigate("/dashboard", { replace: true }); })
@@ -36,7 +54,7 @@ export default function Login() {
         acceptingAdminInvitation.current = false;
         setError(getErrorMessage(err, "This administrator invitation could not be accepted."));
       });
-  }, [user, navigate, refreshUser, searchParams]);
+  }, [user, navigate, refreshUser, searchParams, destination]);
 
   useEffect(() => {
     queueMicrotask(() => setGoogleUrl(`${window.location.origin}/api/auth/google/url?state=login`));
@@ -71,7 +89,8 @@ export default function Login() {
           throw new Error("No GoodHours account found for this Google account.");
         }
         loginWithToken(result.token, result.user);
-        navigate("/dashboard", { replace: true });
+        clearQrReturn();
+        navigate(destination, { replace: true });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -84,7 +103,7 @@ export default function Login() {
     return () => {
       cancelled = true;
     };
-  }, [searchParams, loginWithToken, navigate]);
+  }, [searchParams, loginWithToken, navigate, destination]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,7 +125,8 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email, password);
-      navigate("/dashboard");
+      clearQrReturn();
+      navigate(destination);
     } catch (err: unknown) {
       setError(getErrorMessage(err, "Invalid email or password. Please try again."));
     } finally {
@@ -126,7 +146,8 @@ export default function Login() {
         throw new Error("No GoodHours account found for this Google account.");
       }
       loginWithToken(result.token, result.user);
-      navigate("/dashboard");
+      clearQrReturn();
+      navigate(destination);
     } catch (err: unknown) {
       setError(getErrorMessage(err, "Dev Google sign-in failed."));
     } finally {

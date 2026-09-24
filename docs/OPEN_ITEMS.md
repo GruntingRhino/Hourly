@@ -56,6 +56,43 @@ Generated 2026-09-08 at `fef1cea75a47debab4538f3d99ab21557fa3ccf2` (branch `main
 
 <!-- END GENERATED -->
 
+## Deep-audit note — 2026-09-14 (audit evidence, not a tracker update)
+
+Independent deep audit at `ce2758ec34452d611fca92204681e9197ee9f4f9`: see
+`docs/qa/PILOT_DEEP_AUDIT_2026-09-14.md`, raw evidence in
+`docs/qa/evidence/2026-09-14/`. No row below was changed by that audit.
+
+Staleness flag: the generated block above is stamped 2026-09-08 at `fef1cea`
+and is now **12 commits behind HEAD** (`fef1cea..ce2758e`). Its 487-test
+figure and all §12 re-verification stamps are therefore **stale, not
+re-measured here and not updated here** — the audit's fresh measurement (565
+tests, 564 pass / 0 fail / 1 explained skip; dependency audits 0/0/0 across
+all three graphs) lives only in the audit report and its evidence files, per
+rule R8. Regenerate the block from a clean clone before trusting any number
+in it.
+
+## Local engineering release evidence — 2026-09-24
+
+The historical 2026-09-14 audit below describes the *then-deployed* QR defect;
+its findings are not current-source assertions. The candidate based on
+`ce2758ec34452d611fca92204681e9197ee9f4f9` now implements a navigable
+phone-camera QR handoff, signed-out return after login, second-scan replacement,
+server-side America/New_York check-in window (30 minutes before start through
+end, ambiguous/nonexistent DST wall times rejected), and fail-closed sensitive
+access logs. Local Node 24 server suite: 585 tests, 584 passed, 0 failed,
+1 skipped; server/client builds and client lint passed. Thirteen selected QR,
+privacy and accessibility browser tests passed against the local preview.
+Root/server/client dependency audits with dev dependencies reported zero
+vulnerabilities. These are *local* engineering results, not a hosted/device,
+provider-delivery, school-authorization, or compliance pass.
+
+Authenticated hosted synthetic testing remains paused: the effective database
+branch of each deployment has not been proven separate; the named Neon dev
+branch is archived. Release source SHA, production/alias deployment readiness,
+and served behavior must be checked after push. Physical-phone scanning,
+Classroom/Canvas tenant acceptance, delivered email/alerts, backup restore,
+rollback and real-student authorization remain open.
+
 ## Gate roll-up — what actually blocks what
 
 `Gate` is the only priority signal in this document. Section order is not.

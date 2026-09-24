@@ -77,15 +77,25 @@ test("audit history denies same-school teacher outside assigned cohort before lo
 });
 
 test("audit history allows assigned-cohort teacher and school admin", async () => {
-  const originals = { user: prisma.user.findUnique, session: prisma.serviceSession.findUnique, logs: prisma.auditLog.findMany };
+  const originals = { user: prisma.user.findUnique, session: prisma.serviceSession.findUnique, logs: prisma.auditLog.findMany, accessLog: prisma.dataAccessLog.create };
+  const events: any[] = [];
   prisma.serviceSession.findUnique = async () => ({ id: "session-a", userId: "student-a", user: assignedStudent, opportunity: { organizationId: "org-a" } });
   prisma.auditLog.findMany = async () => [];
-  for (const actor of [teacher, admin]) {
-    const restore = installUserLookup(actor, assignedStudent);
-    try { const response = await request(reportsRoutes, "GET", "/audit/session-a", actor); assert.equal(response.status, 200); }
-    finally { restore(); }
+  // These actors and students are deliberately in-memory doubles, not DB rows.
+  // Keep the access-log write in the contract and assert its actual payload.
+  prisma.dataAccessLog.create = async (input: any) => { events.push(input.data); return input.data; };
+  try {
+    for (const actor of [teacher, admin]) {
+      const restore = installUserLookup(actor, assignedStudent);
+      try { const response = await request(reportsRoutes, "GET", "/audit/session-a", actor); assert.equal(response.status, 200); }
+      finally { restore(); }
+    }
+    assert.deepEqual(events.map((event) => event.actorId), [teacher.id, admin.id]);
+    assert.ok(events.every((event) => event.targetId === assignedStudent.id && event.schoolId === "school-a"));
+  } finally {
+    prisma.user.findUnique = originals.user; prisma.serviceSession.findUnique = originals.session;
+    prisma.auditLog.findMany = originals.logs; prisma.dataAccessLog.create = originals.accessLog;
   }
-  prisma.user.findUnique = originals.user; prisma.serviceSession.findUnique = originals.session; prisma.auditLog.findMany = originals.logs;
 });
 
 test("beneficiary history denies same-school out-of-cohort teacher and preserves student owner", async () => {

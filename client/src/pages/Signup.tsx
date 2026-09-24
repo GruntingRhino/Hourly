@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 const AUDIENCES = [
@@ -27,6 +27,7 @@ const AUDIENCES = [
 
 export default function Signup() {
   const [audience, setAudience] = useState<typeof AUDIENCES[number]["id"]>("school");
+  const tabs = useRef<Array<HTMLButtonElement | null>>([]);
   const selected = AUDIENCES.find((item) => item.id === audience) ?? AUDIENCES[0];
 
   return (
@@ -35,16 +36,28 @@ export default function Signup() {
         <Link to="/" className="block text-[20px] font-bold mb-7" style={{ color: "var(--navy)" }}>GoodHours</Link>
         <div className="border border-[var(--border)] rounded-[3px] p-6 text-left" style={{ background: "var(--surface)" }}>
           <h1 className="text-[18px] font-semibold mb-2" style={{ color: "var(--text)" }}>How to Join GoodHours</h1>
-          <p className="text-[13px] mb-5" style={{ color: "var(--text-sec)" }}>GoodHours is for users who are 13 or older. Pick the path that matches you. Only school admins create new school workspaces here; students and partners join through invitations.</p>
+          <p className="text-[13px] mb-5" style={{ color: "var(--text-sec)" }}>Student accounts are limited to people age 13 or older. School staff and partner administrators follow separate authorization requirements. Pick the path that matches you. Only school admins create new school workspaces here; students and partners join through invitations.</p>
 
           <div className="grid gap-2 sm:grid-cols-3 mb-5" role="tablist" aria-label="Join GoodHours as">
-            {AUDIENCES.map((item) => {
+            {AUDIENCES.map((item, index) => {
               const active = item.id === audience;
               return (
                 <button
                   key={item.id}
+                  ref={(node) => { tabs.current[index] = node; }}
                   type="button"
                   onClick={() => setAudience(item.id)}
+                  onKeyDown={(event) => {
+                    const nextIndex = event.key === "ArrowRight" ? (index + 1) % AUDIENCES.length
+                      : event.key === "ArrowLeft" ? (index + AUDIENCES.length - 1) % AUDIENCES.length
+                      : event.key === "Home" ? 0
+                      : event.key === "End" ? AUDIENCES.length - 1
+                      : null;
+                    if (nextIndex === null) return;
+                    event.preventDefault();
+                    setAudience(AUDIENCES[nextIndex].id);
+                    tabs.current[nextIndex]?.focus();
+                  }}
                   className={`rounded-[3px] border px-3 py-3 text-left transition-colors`}
                   style={active
                     ? { borderColor: "var(--action)", background: "var(--action-lt)", color: "var(--navy)" }

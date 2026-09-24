@@ -58,8 +58,7 @@ export default function Privacy() {
               publish volunteer opportunities and verify student attendance.
             </li>
             <li>
-              <strong>Parents and Guardians</strong> — individuals who access a limited
-              read-only progress view shared by their child's school account.
+              <strong>Parents and Guardians</strong> — parents and guardians should contact their school for school-controlled records access. Self-service parent progress links are currently disabled.
             </li>
           </ul>
         </>
@@ -71,7 +70,7 @@ export default function Privacy() {
       content: (
         <>
           <p className="font-medium text-[var(--text)]">3.1 Information You Provide</p>
-          <div className="mt-2 overflow-x-auto">
+          <div className="mt-2 overflow-x-auto" role="region" aria-label="Information we collect table" tabIndex={0}>
             <table className="w-full text-[13px] border border-[var(--border)] rounded-[3px] overflow-hidden">
               <thead>
                 <tr className="bg-[var(--surface-alt)] text-left">
@@ -169,7 +168,8 @@ export default function Privacy() {
             </li>
             <li>
               <strong>Generate reports and transcripts</strong> — produce student progress reports
-              for schools, CSV exports for official filings, and parent progress views.
+              for schools and CSV exports for official filings. Parent progress links are not
+              currently available through the Service.
             </li>
             <li>
               <strong>Send transactional communications</strong> — deliver email verification
@@ -204,7 +204,7 @@ export default function Privacy() {
           </p>
 
           <p className="font-medium text-[var(--text)] mt-4">5.1 Within the Platform (Role-Based Access)</p>
-          <div className="mt-2 overflow-x-auto">
+          <div className="mt-2 overflow-x-auto" role="region" aria-label="Role-based data access table" tabIndex={0}>
             <table className="w-full text-[13px] border border-[var(--border)] rounded-[3px] overflow-hidden">
               <thead>
                 <tr className="bg-[var(--surface-alt)] text-left">
@@ -251,7 +251,7 @@ export default function Privacy() {
             We engage the following sub-processors who handle personal data solely on our
             instruction:
           </p>
-          <div className="mt-2 overflow-x-auto">
+          <div className="mt-2 overflow-x-auto" role="region" aria-label="Service providers table" tabIndex={0}>
             <table className="w-full text-[13px] border border-[var(--border)] rounded-[3px] overflow-hidden">
               <thead>
                 <tr className="bg-[var(--surface-alt)] text-left">
@@ -345,12 +345,13 @@ export default function Privacy() {
       content: (
         <>
           <p>
-            GoodHours is for users who are 13 or older. We do not intentionally invite or permit
-            users under 13 to create or use accounts through the Service.
+            Student accounts are limited to people age 13 or older. We do not intentionally permit
+            children under 13 to activate student accounts. School staff and partner administrator
+            accounts follow separate authorization requirements.
           </p>
           <p className="mt-3">
             A school invitation does not create an exception to this age requirement. We do not
-            ask users to provide a date of birth or identity document for this policy. If you
+            ask students to provide a date of birth or identity document for this policy. Pending student invitations may hold roster data before acceptance, including a student name, email, grade, cohort, and starting hours supplied by the school. If you
             believe we may have information about someone under 13, contact us at{" "}
             <a href={`mailto:${CONTACT_EMAIL}`} className="text-[var(--action)] underline hover:opacity-80">{CONTACT_EMAIL}</a>
             so we can review the situation and determine appropriate next steps.
@@ -527,7 +528,7 @@ export default function Privacy() {
             <li>A <strong>session cookie</strong> is cleared when you close your browser; a <strong>persistent ("remember me") cookie</strong> is stored for up to 7 days.</li>
             <li>The session token carried by the cookie remains valid for up to 24 hours for student accounts and up to 7 days for other roles; after the token expires you must log in again even if the cookie is still stored.</li>
             <li>Logging out clears the session cookie and the locally cached profile.</li>
-            <li>The app does not store your session token in localStorage or sessionStorage; only a non-sensitive cached copy of your profile is kept locally to speed up repeat visits.</li>
+            <li>The app does not store your login session token in localStorage or sessionStorage. It keeps a cached profile locally. If you scan an attendance QR code, its short-lived check-in code is temporarily stored in this tab&apos;s sessionStorage so it survives sign-in; it is removed after a successful check-in, replaced by a new scan, or cleared when the tab is closed.</li>
           </ul>
           <p className="mt-3">
             We do not use third-party tracking cookies, advertising cookies, or behavioral

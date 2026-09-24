@@ -34,7 +34,7 @@ export default function AgeEligibility() {
       <section className="w-full max-w-lg rounded-xl border border-[var(--border)] bg-[var(--surface)] p-8 shadow-sm">
         <p className="text-sm font-semibold uppercase tracking-wide text-[var(--action)]">Account setup</p>
         <h1 className="mt-2 text-2xl font-bold text-[var(--text)]">Confirm your eligibility</h1>
-        <p className="mt-4 text-[var(--text-sec)]">GoodHours is available to people who are 13 or older. Confirm this before continuing. We do not ask you to provide your date of birth or identity documents here.</p>
+        <p className="mt-4 text-[var(--text-sec)]">Student accounts are available to people who are 13 or older. Confirm this before continuing. We do not ask you to provide your date of birth or identity documents here.</p>
         {error && <p role="alert" className="mt-4 rounded border border-[var(--er-b)] bg-[var(--er-bg)] p-3 text-sm text-[var(--er-t)]">{error}</p>}
         <form onSubmit={submit} className="mt-6 space-y-5">
           <label className="flex items-start gap-3 text-sm text-[var(--text)]">

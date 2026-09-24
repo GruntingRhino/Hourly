@@ -64,7 +64,13 @@ test("fake school pilot: roles, waitlist, attendance, approval, ledger, transcri
 
   const legacyOrganization = await db.organization.create({ data: { name: `FAKE LEGACY ORG ${runId}`, email: `${runId}@fake-pilot.test`, status: "APPROVED" } });
   const legacyOrgAdmin = await db.user.create({ data: { email: `${runId}-legacy-org@fake-pilot.test`, name: "FAKE Legacy Organization Admin", role: "ORG_ADMIN", organizationId: legacyOrganization.id, emailVerified: true } });
-  const legacyOpportunity = await db.opportunity.create({ data: { title: `FAKE Legacy Event ${runId}`, description: "Synthetic only", location: "Synthetic", date: new Date(Date.now() - 86400000), startTime: "10:00 AM", endTime: "12:00 PM", durationHours: 2, capacity: 10, organizationId: legacyOrganization.id, status: "ACTIVE" } });
+  // This scenario exercises a successful QR redemption; use today's Eastern calendar
+  // date and an in-window event. The separate window tests cover tight boundaries.
+  const easternParts = Object.fromEntries(new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York", year: "numeric", month: "numeric", day: "numeric",
+  }).formatToParts(new Date()).map(({ type, value }) => [type, value]));
+  const easternToday = new Date(Date.UTC(Number(easternParts.year), Number(easternParts.month) - 1, Number(easternParts.day)));
+  const legacyOpportunity = await db.opportunity.create({ data: { title: `FAKE Legacy Event ${runId}`, description: "Synthetic only", location: "Synthetic", date: easternToday, startTime: "12:00 AM", endTime: "11:59 PM", durationHours: 23, capacity: 10, organizationId: legacyOrganization.id, status: "ACTIVE" } });
   const legacySession = await db.serviceSession.create({ data: { userId: studentOne.id, schoolId: school.id, opportunityId: legacyOpportunity.id, status: "PENDING_CHECKIN" } });
 
   const opportunity = await db.beneficiaryOpportunity.create({ data: { title: `FAKE Event ${runId}`, description: "Synthetic only", beneficiaryId: beneficiary.id, startDate: new Date(Date.now() - 3 * 86400000), category: "general" } });
@@ -142,6 +148,16 @@ test("fake school pilot: roles, waitlist, attendance, approval, ledger, transcri
     const qrIssued = await request(base, `/api/sessions/${legacySession.id}/qr-token`, legacyOrgAdmin, { method: "POST", body: JSON.stringify({ ttlSeconds: 300 }) });
     const qrBody = await json(qrIssued);
     assert.equal(qrIssued.status, 201, JSON.stringify(qrBody));
+    // A still-valid token must not bypass the event window on either endpoint.
+    await db.opportunity.update({ where: { id: legacyOpportunity.id }, data: { date: new Date(easternToday.getTime() - 86400000) } });
+    const closedResolve = await request(base, "/api/sessions/qr-resolve", studentOne, { method: "POST", body: JSON.stringify({ token: qrBody.token }) });
+    assert.equal(closedResolve.status, 409, await closedResolve.text());
+    const closedCheckin = await request(base, `/api/sessions/${legacySession.id}/qr-checkin`, studentOne, { method: "POST", body: JSON.stringify({ token: qrBody.token }) });
+    assert.equal(closedCheckin.status, 409, await closedCheckin.text());
+    assert.equal(await db.attendanceQrRedemption.count({ where: { sessionId: legacySession.id } }), 0);
+    await db.opportunity.update({ where: { id: legacyOpportunity.id }, data: { date: easternToday } });
+    const openResolve = await request(base, "/api/sessions/qr-resolve", studentOne, { method: "POST", body: JSON.stringify({ token: qrBody.token }) });
+    assert.equal(openResolve.status, 200, await openResolve.text());
     const qrCheckin = await request(base, `/api/sessions/${legacySession.id}/qr-checkin`, studentOne, { method: "POST", body: JSON.stringify({ token: qrBody.token }) });
     assert.equal(qrCheckin.status, 200, await qrCheckin.text());
     const checkedIn = await db.serviceSession.findUnique({ where: { id: legacySession.id } });

@@ -98,10 +98,10 @@ export default function JoinBeneficiaryAdmin() {
             </div>
           ) : invitation ? (
             <form onSubmit={createAccount} className="space-y-4">
-              <div><label className="block text-sm font-medium mb-1">Your name</label><input required value={name} onChange={(event) => setName(event.target.value)} className="w-full px-3 py-2.5 border border-[var(--border-s)] rounded-[3px] text-sm" /></div>
+              <div><label htmlFor="admin-invite-name" className="block text-sm font-medium mb-1">Your name</label><input id="admin-invite-name" required value={name} onChange={(event) => setName(event.target.value)} className="w-full px-3 py-2.5 border border-[var(--border-s)] rounded-[3px] text-sm" /></div>
               <div>
-                <label className="block text-sm font-medium mb-1">Password</label>
-                <input required type="password" value={password} onChange={(event) => setPassword(event.target.value)} className="w-full px-3 py-2.5 border border-[var(--border-s)] rounded-[3px] text-sm" />
+                <label htmlFor="admin-invite-password" className="block text-sm font-medium mb-1">Password</label>
+                <input id="admin-invite-password" required type="password" value={password} onChange={(event) => setPassword(event.target.value)} className="w-full px-3 py-2.5 border border-[var(--border-s)] rounded-[3px] text-sm" />
                 {password.length > 0 && <ul className="mt-2 space-y-0.5">{PASSWORD_RULES.map((rule) => <li key={rule.label} className={`text-xs ${rule.test(password) ? "text-[var(--ok-t)]" : "text-[var(--text-faint)]"}`}>{rule.test(password) ? "✓" : "○"} {rule.label}</li>)}</ul>}
               </div>
               <button disabled={submitting || !passwordOk} className="w-full py-[10px] bg-[var(--action)] text-white rounded-[3px] font-medium text-sm disabled:opacity-50">{submitting ? "Creating account..." : "Accept and create account"}</button>

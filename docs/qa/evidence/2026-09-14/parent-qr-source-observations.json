@@ -1,0 +1,14 @@
+{
+  "checked_date": "2026-09-14",
+  "finding": "Public QR claims phone-camera scan-to-check-in but encodes raw signed token, not a navigable GoodHours check-in URL",
+  "classification": "source-confirmed integration/usability gap; physical-camera behavior not exercised",
+  "source": ["client/src/pages/PublicAttendanceQr.tsx:21 QRCode.toDataURL(token)", "client/src/pages/PublicAttendanceQr.tsx:50-51 Scan to check in / Use your phone camera", "client/src/pages/student/QrCheckin.tsx:7-17 requires sessionId plus token and posts authenticated session-scoped API", "client/src/pages/student/QrCheckin.tsx:24 instructs manual code paste"],
+  "live_assets": [
+    {"url":"https://goodhours.app/assets/PublicAttendanceQr-BZHfLmdG.js","sha256":"99c52f1c134f35ad7f86794875de4465770c2b57e61189481f7c2e1a70ad2888","observation":"Current live bundle includes raw-token QR generation and phone-camera copy"},
+    {"url":"https://goodhours.app/assets/QrCheckin-CBW5dU7-.js","sha256":"de3444ec8aec3afed4dc7ef7e04e75bcca59899529d1328f0be6adcf034b976e","observation":"Current live bundle requires sessionId and token; manual paste form"}
+  ],
+  "other_source_gaps": ["PublicAttendanceQr validates once on load but never transitions to expired display on its own; server expiry enforcement is separate and still exists", "QR is implemented for legacy Opportunity/ServiceSession; beneficiaries/time slots use a separate attendance model (sessions.ts:22-23); acceptance must name which model the pilot uses"],
+  "read_only_live_probe": {"url":"https://goodhours.app/api/attendance-qr/share?token=synthetic-invalid-audit","http":404,"body":"Attendance QR link is invalid or expired","cache_control":"public, max-age=0, must-revalidate","referrer_policy":"no-referrer","x_robots_tag":null},
+  "browser_tool": "Browser auto-launch blocked: Chrome not found. No install attempted on nearly-full development disk. Not evidence the app fails to load.",
+  "scope": "No live QR minted, no production data mutated, no real token logged. Raw-token flow needs a narrow design/remediation and regression proof preserving student authentication, tenant scope and bearer isolation; do not substitute an unvalidated URL/PII expansion."
+}

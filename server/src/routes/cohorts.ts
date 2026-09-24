@@ -541,6 +541,14 @@ router.get("/export", authenticate, requireRole("SCHOOL_ADMIN", "TEACHER"), asyn
     }
 
     const csv = rows.map((row) => row.map(csvCell).join(",")).join("\n");
+    await logDataAccess({
+      actorId: req.user!.userId,
+      action: "EXPORT_COHORT_SUMMARIES",
+      targetType: "SCHOOL",
+      targetId: scope.schoolId,
+      schoolId: scope.schoolId,
+      details: { cohortCount: cohorts.length },
+    });
     const filename = scope.isSchoolAdmin ? "school-cohorts.csv" : "assigned-cohorts.csv";
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", contentDisposition(filename));

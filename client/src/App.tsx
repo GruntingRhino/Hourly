@@ -125,6 +125,11 @@ function AppRoutes() {
       <Route path="/join/student" element={<JoinCohort />} />
       <Route path="/join/beneficiary" element={<JoinBeneficiary />} />
       <Route path="/join/admin" element={<JoinBeneficiaryAdmin />} />
+      {/* Phone-camera QR handoff: reachable signed-out so a scan lands on a
+          useful page. The component prompts for student sign-in, keeps the
+          scanned token tab-locally, and the server still enforces
+          student-only redemption with server-derived session/tenant checks. */}
+      <Route path="/qr-checkin" element={<QrCheckin />} />
       <Route path="/parent-progress" element={<ParentProgress />} />
       <Route path="/faq" element={<FAQ />} />
       <Route path="/terms" element={<Terms />} />
@@ -146,7 +151,6 @@ function AppRoutes() {
               <Route path="/opportunity/:id" element={<OpportunityDetail />} />
               <Route path="/slot/:id" element={<SlotDetail />} />
               <Route path="/submit" element={<StudentSelfSubmit />} />
-              <Route path="/qr-checkin" element={<QrCheckin />} />
               <Route path="/messages" element={<StudentMessages />} />
               <Route path="/settings" element={<StudentSettings />} />
             </>

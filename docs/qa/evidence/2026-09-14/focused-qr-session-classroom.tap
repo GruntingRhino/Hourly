@@ -1,0 +1,443 @@
+TAP version 13
+# Subtest: share path carries only the signed attendance token
+ok 1 - share path carries only the signed attendance token
+  ---
+  duration_ms: 0.928247
+  type: 'test'
+  ...
+# Subtest: share token normalization rejects oversized or malformed input
+ok 2 - share token normalization rejects oversized or malformed input
+  ---
+  duration_ms: 0.201481
+  type: 'test'
+  ...
+# [RateLimit] Using in-memory bucket store. On Vercel serverless, rate limits reset on every cold start. Configure shared production rate limiting with PostgreSQL or Upstash.
+# ⚠️  Optional environment variables not set (some features may be disabled):
+#    - JWT_SECRET_PREVIOUS
+#    - RESEND_API_KEY
+#    - EMAIL_FROM
+#    - GOOGLE_CLIENT_ID
+#    - GOOGLE_CLIENT_SECRET
+#    - GOOGLE_CALLBACK_URL
+#    - APP_URL
+#    - CLIENT_URL
+#    - PORT
+#    - ALLOWED_ORIGINS
+#    - FIELD_ENCRYPTION_KEY
+#    - ATTENDANCE_QR_SECRET
+#    - SUPERVISOR_VERIFICATION_SECRET
+#    - DEV_DATABASE_URL
+#    - CANVAS_CLIENT_ID
+#    - CANVAS_CLIENT_SECRET
+#    - CANVAS_CALLBACK_URL
+#    - CANVAS_ALLOWED_ORIGINS
+#    - CANVAS_ENABLE_MOCK
+#    - CANVAS_REQUEST_TIMEOUT_MS
+#    - CANVAS_PAGE_SIZE
+#    - GOOGLE_CLASSROOM_CLIENT_ID
+#    - GOOGLE_CLASSROOM_CLIENT_SECRET
+#    - GOOGLE_CLASSROOM_CALLBACK_URL
+#    - GOOGLE_CLASSROOM_ENABLE_MOCK
+#    - GOOGLE_CLASSROOM_REQUEST_TIMEOUT_MS
+#    - GOOGLE_CLASSROOM_PAGE_SIZE
+#    - UPSTASH_REDIS_REST_URL
+#    - UPSTASH_REDIS_REST_TOKEN
+# Subtest: PostgreSQL proves correction deltas, reversal, and cancelled-export exclusion
+ok 3 - PostgreSQL proves correction deltas, reversal, and cancelled-export exclusion
+  ---
+  duration_ms: 385.009644
+  type: 'test'
+  ...
+# Reset beneficiary review error: PrismaClientKnownRequestError:
+# Invalid `prisma.beneficiarySignup.update()` invocation:
+# Transaction failed due to a write conflict or a deadlock. Please retry your transaction
+#     at ei.handleRequestError (/home/opc/RTB/projects/goodhours/server/node_modules/.prisma/client/runtime/library.js:125:7268)
+#     at ei.handleAndLogRequestError (/home/opc/RTB/projects/goodhours/server/node_modules/.prisma/client/runtime/library.js:125:6593)
+#     at ei.request (/home/opc/RTB/projects/goodhours/server/node_modules/.prisma/client/runtime/library.js:125:6300)
+#     at async a (/home/opc/RTB/projects/goodhours/server/node_modules/.prisma/client/runtime/library.js:134:9551)
+#     at async import_prisma.default.$transaction.isolationLevel (/home/opc/RTB/projects/goodhours/server/src/routes/beneficiaries.ts:3192:22)
+#     at async Proxy._transactionWithCallback (/home/opc/RTB/projects/goodhours/server/node_modules/.prisma/client/runtime/library.js:134:8120)
+#     at async <anonymous> (/home/opc/RTB/projects/goodhours/server/src/routes/beneficiaries.ts:3181:21) {
+#   code: 'P2034',
+#   meta: { modelName: 'BeneficiarySignup' },
+#   clientVersion: '6.19.3'
+# }
+# Subtest: serializable HTTP transactions preserve one consistent result under concurrent correction/reset
+ok 4 - serializable HTTP transactions preserve one consistent result under concurrent correction/reset
+  ---
+  duration_ms: 158.483016
+  type: 'test'
+  ...
+# Approve signup error: Error: INJECTED_LEDGER_FAILURE
+#     at Proxy.<anonymous> (/home/opc/RTB/projects/goodhours/server/tests/cancelledBeneficiaryExport.test.ts:207:77)
+#     at recordServiceHourLedgerEntry (/home/opc/RTB/projects/goodhours/server/src/lib/serviceHourLedger.ts:30:37)
+#     at import_prisma.default.$transaction.isolationLevel (/home/opc/RTB/projects/goodhours/server/src/routes/beneficiaries.ts:2947:13)
+#     at async Proxy._transactionWithCallback (/home/opc/RTB/projects/goodhours/server/node_modules/.prisma/client/runtime/library.js:134:8120)
+#     at async <anonymous> (/home/opc/RTB/projects/goodhours/server/src/routes/beneficiaries.ts:2918:21)
+# Subtest: injected ledger failure rolls back source, audit, and ledger writes
+ok 5 - injected ledger failure rolls back source, audit, and ledger writes
+  ---
+  duration_ms: 94.65351
+  type: 'test'
+  ...
+# Subtest: real API roster shape resolves email (was silently dropped)
+ok 6 - real API roster shape resolves email (was silently dropped)
+  ---
+  duration_ms: 1.002767
+  type: 'test'
+  ...
+# Subtest: real API roster shape resolves full name (was [object Object])
+ok 7 - real API roster shape resolves full name (was [object Object])
+  ---
+  duration_ms: 0.210802
+  type: 'test'
+  ...
+# Subtest: given+family names combine when fullName is absent
+ok 8 - given+family names combine when fullName is absent
+  ---
+  duration_ms: 0.195361
+  type: 'test'
+  ...
+# Subtest: legacy flat name shape still resolves
+ok 9 - legacy flat name shape still resolves
+  ---
+  duration_ms: 0.197961
+  type: 'test'
+  ...
+# Subtest: entries without any email still resolve empty (dropped downstream)
+ok 10 - entries without any email still resolve empty (dropped downstream)
+  ---
+  duration_ms: 0.171441
+  type: 'test'
+  ...
+# Subtest: OAuth reconnect clears stale sync state before the next Classroom sync
+ok 11 - OAuth reconnect clears stale sync state before the next Classroom sync
+  ---
+  duration_ms: 0.691405
+  type: 'test'
+  ...
+# Subtest: supervisor verification client posts the token in the body to the registered consume path
+ok 12 - supervisor verification client posts the token in the body to the registered consume path
+  ---
+  duration_ms: 1.238008
+  type: 'test'
+  ...
+# Subtest: inline student QR check-in posts to the session-scoped registered path
+ok 13 - inline student QR check-in posts to the session-scoped registered path
+  ---
+  duration_ms: 0.384883
+  type: 'test'
+  ...
+# Subtest: school-deletion helper tombstones (never wipes) disclosure rows and stays unwired pending an owner product decision
+ok 14 - school-deletion helper tombstones (never wipes) disclosure rows and stays unwired pending an owner product decision
+  ---
+  duration_ms: 7.927053
+  type: 'test'
+  ...
+# Subtest: no route wipes the disclosure/accounting trail by scope
+ok 15 - no route wipes the disclosure/accounting trail by scope
+  ---
+  duration_ms: 4.294789
+  type: 'test'
+  ...
+# Subtest: privacy page describes the shipped HttpOnly cookie transport (F-01)
+ok 16 - privacy page describes the shipped HttpOnly cookie transport (F-01)
+  ---
+  duration_ms: 0.589204
+  type: 'test'
+  ...
+# Subtest: privacy page no longer promises parent self-service links (F-18)
+ok 17 - privacy page no longer promises parent self-service links (F-18)
+  ---
+  duration_ms: 0.455523
+  type: 'test'
+  ...
+# Subtest: orphan studentPreferences router is mounted for the student settings client (F-11)
+ok 18 - orphan studentPreferences router is mounted for the student settings client (F-11)
+  ---
+  duration_ms: 0.629044
+  type: 'test'
+  ...
+# Subtest: staff QR issuance UI posts ttlSeconds to the session-scoped registered path
+ok 19 - staff QR issuance UI posts ttlSeconds to the session-scoped registered path
+  ---
+  duration_ms: 0.300282
+  type: 'test'
+  ...
+# Subtest: staff QR issuance UI exposes no revoke control (no revoke route exists)
+ok 20 - staff QR issuance UI exposes no revoke control (no revoke route exists)
+  ---
+  duration_ms: 1.237008
+  type: 'test'
+  ...
+# Subtest: issued-code panel renders event + expiry + code only, never student PII
+ok 21 - issued-code panel renders event + expiry + code only, never student PII
+  ---
+  duration_ms: 1.030447
+  type: 'test'
+  ...
+# Subtest: issuance route is mounted for school roles and public QR display is isolated
+ok 22 - issuance route is mounted for school roles and public QR display is isolated
+  ---
+  duration_ms: 0.571644
+  type: 'test'
+  ...
+# Subtest: student QR check-in route is unchanged by the staff issuance UI
+ok 23 - student QR check-in route is unchanged by the staff issuance UI
+  ---
+  duration_ms: 0.166481
+  type: 'test'
+  ...
+# Subtest: API requests use the HttpOnly same-origin session rather than a stored bearer token
+ok 24 - API requests use the HttpOnly same-origin session rather than a stored bearer token
+  ---
+  duration_ms: 1.226609
+  type: 'test'
+  ...
+# Subtest: upload cleanup uses the effective writable runtime directory
+ok 25 - upload cleanup uses the effective writable runtime directory
+  ---
+  duration_ms: 0.238681
+  type: 'test'
+  ...
+# Subtest: password rotation does not return the refreshed JWT to browser JavaScript
+ok 26 - password rotation does not return the refreshed JWT to browser JavaScript
+  ---
+  duration_ms: 0.304602
+  type: 'test'
+  ...
+# Subtest: student JWT cookies never outlive the 24-hour student token
+ok 27 - student JWT cookies never outlive the 24-hour student token
+  ---
+  duration_ms: 0.382563
+  type: 'test'
+  ...
+# Subtest: server csvCell neutralizes leading formula trigger: "=HYPERLINK(\\""
+ok 28 - server csvCell neutralizes leading formula trigger: "=HYPERLINK(\\""
+  ---
+  duration_ms: 1.293209
+  type: 'test'
+  ...
+# Subtest: server csvCell neutralizes leading formula trigger: "=1+1"
+ok 29 - server csvCell neutralizes leading formula trigger: "=1+1"
+  ---
+  duration_ms: 0.482883
+  type: 'test'
+  ...
+# Subtest: server csvCell neutralizes leading formula trigger: "+1+1"
+ok 30 - server csvCell neutralizes leading formula trigger: "+1+1"
+  ---
+  duration_ms: 0.164121
+  type: 'test'
+  ...
+# Subtest: server csvCell neutralizes leading formula trigger: "-1+1"
+ok 31 - server csvCell neutralizes leading formula trigger: "-1+1"
+  ---
+  duration_ms: 0.123601
+  type: 'test'
+  ...
+# Subtest: server csvCell neutralizes leading formula trigger: "@SUM(1:10)"
+ok 32 - server csvCell neutralizes leading formula trigger: "@SUM(1:10)"
+  ---
+  duration_ms: 0.127481
+  type: 'test'
+  ...
+# Subtest: server csvCell neutralizes leading formula trigger: "|calc|cmd"
+ok 33 - server csvCell neutralizes leading formula trigger: "|calc|cmd"
+  ---
+  duration_ms: 0.126041
+  type: 'test'
+  ...
+# Subtest: server csvCell neutralizes leading formula trigger: "\\t=1+1"
+ok 34 - server csvCell neutralizes leading formula trigger: "\\t=1+1"
+  ---
+  duration_ms: 0.110201
+  type: 'test'
+  ...
+# Subtest: server csvCell neutralizes leading formula trigger: "\\r=1+1"
+ok 35 - server csvCell neutralizes leading formula trigger: "\\r=1+1"
+  ---
+  duration_ms: 0.146321
+  type: 'test'
+  ...
+# Subtest: server csvCell neutralizes leading formula trigger: "=cmd|'/c cal"
+ok 36 - server csvCell neutralizes leading formula trigger: "=cmd|'/c cal"
+  ---
+  duration_ms: 0.805885
+  type: 'test'
+  ...
+# Subtest: server csvCell leaves benign values and numeric hours untouched
+ok 37 - server csvCell leaves benign values and numeric hours untouched
+  ---
+  duration_ms: 0.985366
+  type: 'test'
+  ...
+# Subtest: server buildCsv serializes rows with CRLF-safe quoting
+ok 38 - server buildCsv serializes rows with CRLF-safe quoting
+  ---
+  duration_ms: 0.339042
+  type: 'test'
+  ...
+# Subtest: client escapeCsvCell matches the server contract on every vector
+ok 39 - client escapeCsvCell matches the server contract on every vector
+  ---
+  duration_ms: 0.303002
+  type: 'test'
+  ...
+# Subtest: every client-built PII export routes cells through escapeCsvCell
+ok 40 - every client-built PII export routes cells through escapeCsvCell
+  ---
+  duration_ms: 0.995167
+  type: 'test'
+  ...
+# Subtest: same-school teacher outside assigned cohort cannot mint a QR token (403)
+ok 41 - same-school teacher outside assigned cohort cannot mint a QR token (403)
+  ---
+  duration_ms: 88.469069
+  type: 'test'
+  ...
+# Subtest: assigned-cohort teacher can mint a QR token (201)
+ok 42 - assigned-cohort teacher can mint a QR token (201)
+  ---
+  duration_ms: 31.186248
+  type: 'test'
+  ...
+# Subtest: cross-school teacher cannot mint a QR token (403)
+ok 43 - cross-school teacher cannot mint a QR token (403)
+  ---
+  duration_ms: 9.701864
+  type: 'test'
+  ...
+# Subtest: school admin in the same school can still mint a QR token (201, behavior preserved)
+ok 44 - school admin in the same school can still mint a QR token (201, behavior preserved)
+  ---
+  duration_ms: 13.703171
+  type: 'test'
+  ...
+# Subtest: safe test gate passes a loopback labeled target
+ok 45 - safe test gate passes a loopback labeled target
+  ---
+  duration_ms: 42.809285
+  type: 'test'
+  ...
+# Subtest: safe test gate passes when no target variables are inherited
+ok 46 - safe test gate passes when no target variables are inherited
+  ---
+  duration_ms: 9.918346
+  type: 'test'
+  ...
+# Subtest: safe test gate refuses a non-loopback DATABASE_URL without contacting it
+ok 47 - safe test gate refuses a non-loopback DATABASE_URL without contacting it
+  ---
+  duration_ms: 34.138588
+  type: 'test'
+  ...
+# Subtest: safe test gate refuses a remote DEV_DATABASE_URL even with loopback DATABASE_URL
+ok 48 - safe test gate refuses a remote DEV_DATABASE_URL even with loopback DATABASE_URL
+  ---
+  duration_ms: 63.682705
+  type: 'test'
+  ...
+# Subtest: safe test gate refuses a remote RATE_LIMIT_TEST_DATABASE_URL
+ok 49 - safe test gate refuses a remote RATE_LIMIT_TEST_DATABASE_URL
+  ---
+  duration_ms: 60.518723
+  type: 'test'
+  ...
+# Subtest: safe test gate refuses production mode flags
+ok 50 - safe test gate refuses production mode flags
+  ---
+  duration_ms: 111.459942
+  type: 'test'
+  ...
+# Subtest: safe test gate never prints URL values on refusal
+ok 51 - safe test gate never prints URL values on refusal
+  ---
+  duration_ms: 34.403589
+  type: 'test'
+  ...
+# Subtest: supervisor verification is signed, school-domain authorized, and one-time
+ok 52 - supervisor verification is signed, school-domain authorized, and one-time
+  ---
+  duration_ms: 2.150334
+  type: 'test'
+  ...
+# Subtest: supervisor verification rejects tampering and expiry
+ok 53 - supervisor verification rejects tampering and expiry
+  ---
+  duration_ms: 0.991287
+  type: 'test'
+  ...
+# ⚠️  Optional environment variables not set (some features may be disabled):
+#    - JWT_SECRET_PREVIOUS
+#    - RESEND_API_KEY
+#    - EMAIL_FROM
+#    - GOOGLE_CLIENT_ID
+#    - GOOGLE_CLIENT_SECRET
+#    - GOOGLE_CALLBACK_URL
+#    - APP_URL
+#    - CLIENT_URL
+#    - PORT
+#    - ALLOWED_ORIGINS
+#    - FIELD_ENCRYPTION_KEY
+#    - ATTENDANCE_QR_SECRET
+#    - SUPERVISOR_VERIFICATION_SECRET
+#    - DEV_DATABASE_URL
+#    - CANVAS_CLIENT_ID
+#    - CANVAS_CLIENT_SECRET
+#    - CANVAS_CALLBACK_URL
+#    - CANVAS_ALLOWED_ORIGINS
+#    - CANVAS_ENABLE_MOCK
+#    - CANVAS_REQUEST_TIMEOUT_MS
+#    - CANVAS_PAGE_SIZE
+#    - GOOGLE_CLASSROOM_CLIENT_ID
+#    - GOOGLE_CLASSROOM_CLIENT_SECRET
+#    - GOOGLE_CLASSROOM_CALLBACK_URL
+#    - GOOGLE_CLASSROOM_ENABLE_MOCK
+#    - GOOGLE_CLASSROOM_REQUEST_TIMEOUT_MS
+#    - GOOGLE_CLASSROOM_PAGE_SIZE
+#    - UPSTASH_REDIS_REST_URL
+#    - UPSTASH_REDIS_REST_TOKEN
+# [RateLimit] Using in-memory bucket store. On Vercel serverless, rate limits reset on every cold start. Configure shared production rate limiting with PostgreSQL or Upstash.
+# [Auth] Dev impersonation routes disabled. Set ENABLE_IMPERSONATION=true to enable.
+# {"type":"request","requestId":"f75684ed-6f66-413c-92a2-618f406e4388","method":"POST","path":"/slots/cmu1ifxf1000zbjbub857e2ty/signup","status":201,"ms":72,"ip":"127.0.0.1","userId":"cmu1ifxe2000cbjbufpiudf3e"}
+# {"type":"request","requestId":"c061df03-9882-4093-934f-4739f385ce73","method":"POST","path":"/slots/cmu1ifxf1000zbjbub857e2ty/signup","status":201,"ms":63,"ip":"127.0.0.1","userId":"cmu1ifxe8000fbjbuskam1671"}
+# {"type":"request","requestId":"a1a44955-2103-4fda-b2e2-d405be0fc82a","method":"POST","path":"/signups/cmu1ifxie0011bjbubct0p9cf/cancel","status":200,"ms":114,"ip":"127.0.0.1","userId":"cmu1ifxe2000cbjbufpiudf3e"}
+# {"type":"request","requestId":"6b65ae7f-37ed-4267-95f0-3b78f29439fb","method":"POST","path":"/cmu1ifxdp0004bjbuu8ewve9o/opportunities/cmu1ifxey000xbjbule3wsrxh/attendance","status":200,"ms":47,"ip":"127.0.0.1","userId":"cmu1ifxec000ibjbu4qq9hm1q"}
+# {"type":"request","requestId":"ab7263f0-21ae-479f-8cdc-a367fb650d25","method":"POST","path":"/signups/cmu1ifxkj0015bjbu9zxbrylu/approve","status":200,"ms":49,"ip":"127.0.0.1","userId":"cmu1ifxec000ibjbu4qq9hm1q"}
+# {"type":"request","requestId":"223f9f6f-d732-4b41-90bf-367cbc51a61d","method":"GET","path":"/student","status":200,"ms":92,"ip":"127.0.0.1","userId":"cmu1ifxe8000fbjbuskam1671"}
+# {"type":"request","requestId":"dbb6642f-ec49-418a-84cb-5bbbaad249ef","method":"POST","path":"/student/transcript","status":201,"ms":106,"ip":"127.0.0.1","userId":"cmu1ifxe8000fbjbuskam1671"}
+# {"type":"request","requestId":"30922364-ad70-47db-b0a5-99921ffc3e1e","method":"POST","path":"/transcripts/cmu1ifxy2001nbjbu5pen1mjk/certify","status":200,"ms":35,"ip":"127.0.0.1","userId":"cmu1ifxdt0006bjbutlbjz3g2"}
+# {"type":"request","requestId":"5f789fe7-fdf8-4aeb-82dc-4244f4da8d48","method":"GET","path":"/export/csv","status":200,"ms":43,"ip":"127.0.0.1","userId":"cmu1ifxe8000fbjbuskam1671"}
+# {"type":"request","requestId":"4c603077-858e-43ec-bdd3-2e4d4caf2717","method":"GET","path":"/student","status":403,"ms":28,"ip":"127.0.0.1","userId":"cmu1ifxdz000abjbu4ow0brxa"}
+# {"type":"request","requestId":"6fb29b0b-885a-46e6-b60d-a8a4bc4c6fba","method":"GET","path":"/student","status":200,"ms":66,"ip":"127.0.0.1","userId":"cmu1ifxdx0008bjbu9suxgyi2"}
+# {"type":"request","requestId":"168d76b0-96ab-4a74-bb66-ac4d9de174a7","method":"POST","path":"/signups/cmu1ifxkj0015bjbu9zxbrylu/supervisor-verification","status":201,"ms":39,"ip":"127.0.0.1","userId":"cmu1ifxec000ibjbu4qq9hm1q"}
+# {"type":"request","requestId":"2f2c147a-c3bf-4a5d-af42-a932a6358996","method":"POST","path":"/supervisor-verification/consume","status":200,"ms":35,"ip":"127.0.0.1","userId":null}
+# {"type":"request","requestId":"410f5677-a5e2-4056-be81-56796cc32043","method":"POST","path":"/supervisor-verification/consume","status":400,"ms":8,"ip":"127.0.0.1","userId":null}
+# {"type":"request","requestId":"eb776629-b2d5-4bfd-b13c-9659f7e2983a","method":"POST","path":"/signups/cmu1ifxkj0015bjbu9zxbrylu/supervisor-verification","status":403,"ms":17,"ip":"127.0.0.1","userId":"cmu1ifxdz000abjbu4ow0brxa"}
+# {"type":"request","requestId":"b88718a3-01f4-4696-abd7-aa4ca035ee61","method":"POST","path":"/signups/cmu1ifxkj0015bjbu9zxbrylu/supervisor-verification","status":201,"ms":28,"ip":"127.0.0.1","userId":"cmu1ifxec000ibjbu4qq9hm1q"}
+# {"type":"request","requestId":"178d94bc-42ca-4a30-a7c0-ba86f5b44dfa","method":"POST","path":"/supervisor-verification/consume","status":400,"ms":1,"ip":"127.0.0.1","userId":null}
+# {"type":"request","requestId":"31568dcf-94e2-480a-9147-b1f48d1d0855","method":"POST","path":"/supervisor-verification/consume","status":400,"ms":8,"ip":"127.0.0.1","userId":null}
+# {"type":"request","requestId":"4785594b-0625-479d-bc6e-c86cb1564eec","method":"POST","path":"/cmu1ifxev000vbjbucyvtzjjn/qr-token","status":201,"ms":15,"ip":"127.0.0.1","userId":"cmu1ifxeq000rbjbuimnluuca"}
+# {"type":"request","requestId":"ae120b8a-836d-49e8-9d51-8bfbe033f6a7","method":"POST","path":"/cmu1ifxev000vbjbucyvtzjjn/qr-checkin","status":200,"ms":23,"ip":"127.0.0.1","userId":"cmu1ifxe2000cbjbufpiudf3e"}
+# {"type":"request","requestId":"4a587cb1-7b3e-47c0-a0a2-c3929df832e4","method":"POST","path":"/cmu1ifxev000vbjbucyvtzjjn/qr-checkin","status":409,"ms":11,"ip":"127.0.0.1","userId":"cmu1ifxe2000cbjbufpiudf3e"}
+# {"type":"request","requestId":"938d9aad-67b1-4dcb-b8fc-a4b624e14c4a","method":"POST","path":"/cmu1ifxev000vbjbucyvtzjjn/qr-checkin","status":403,"ms":8,"ip":"127.0.0.1","userId":"cmu1ifxe8000fbjbuskam1671"}
+# {"type":"request","requestId":"79b3005d-3574-4afc-bff7-d6406439de0d","method":"POST","path":"/cmu1ifxev000vbjbucyvtzjjn/qr-token","status":403,"ms":13,"ip":"127.0.0.1","userId":"cmu1ifxdz000abjbu4ow0brxa"}
+# {"type":"request","requestId":"5495a506-a490-475a-a556-c619d832cf8d","method":"POST","path":"/cmu1ifxev000vbjbucyvtzjjn/qr-checkin","status":400,"ms":9,"ip":"127.0.0.1","userId":"cmu1ifxe2000cbjbufpiudf3e"}
+# {"type":"request","requestId":"0103be6a-fa36-49c3-9411-05ca2d27c14c","method":"POST","path":"/cmu1ifycs001zbjbu39b5v0s9/qr-token","status":201,"ms":12,"ip":"127.0.0.1","userId":"cmu1ifxeq000rbjbuimnluuca"}
+# {"type":"request","requestId":"f8a0a43d-0c05-4310-9b01-b3cf744ab4d3","method":"POST","path":"/cmu1ifycs001zbjbu39b5v0s9/qr-checkin","status":400,"ms":6,"ip":"127.0.0.1","userId":"cmu1ifxe8000fbjbuskam1671"}
+# Subtest: fake school pilot: roles, waitlist, attendance, approval, ledger, transcript, export, isolation
+ok 54 - fake school pilot: roles, waitlist, attendance, approval, ledger, transcript, export, isolation
+  ---
+  duration_ms: 1413.540216
+  type: 'test'
+  ...
+1..54
+# tests 54
+# suites 0
+# pass 54
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6797.273518

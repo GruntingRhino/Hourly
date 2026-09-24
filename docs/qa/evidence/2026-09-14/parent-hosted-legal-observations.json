@@ -1,0 +1,38 @@
+{
+  "checked_date": "2026-09-14",
+  "source_head": "ce2758ec34452d611fca92204681e9197ee9f4f9",
+  "production": {
+    "url": "https://goodhours.app",
+    "deployment_id": "dpl_4znJsKTzQQQm379GWQ7Z6yWcaCtt",
+    "deployment_url": "https://goodhours-rcqzm7hgq-gruntingrhinos-projects.vercel.app",
+    "target": "production",
+    "ready_state": "READY",
+    "source": "cli",
+    "node_version": "24.x",
+    "health": {"http": 200, "status": "ok", "db": "ok"},
+    "unauthenticated_auth_me": 401,
+    "unauthenticated_reminders_run": 401,
+    "build_evidence": ["PRODUCTION_REVIEWED_HISTORY_MATCH=verified count=74", "PRODUCTION_SCHEMA_SOURCE_HASH=verified", "74 migrations found in prisma/migrations", "No pending migrations to apply.", "PRODUCTION_LEGACY_ENUM=unreferenced name=UserRole", "PRODUCTION_SCHEMA_MATCH=verified", "Build Completed in /vercel/output"],
+    "build_evidence_date": "2026-09-13",
+    "provenance_script": "FAIL: no gitCommitSha/githubCommitSha in CLI deployment metadata; this is missing provenance evidence, NOT proof of an outdated deployment",
+    "release_pin_env": "GOODHOURS_RELEASE_COMMIT_SHA name present; value not exposed by read-only deployment API",
+    "historical_release_claim": "Previous session 20260912_153329_7db72c message 173885 reported ce2758e deployed. Current exact SHA not independently established by metadata.",
+    "commands": ["node_modules/.bin/vercel whoami", "node_modules/.bin/vercel inspect https://goodhours.app", "node_modules/.bin/vercel api /v13/deployments/dpl_4znJsKTzQQQm379GWQ7Z6yWcaCtt (selected non-secret metadata only)", "node_modules/.bin/vercel inspect https://goodhours.app --logs (selected migration/schema markers only)", "PATH=$PWD/node_modules/.bin:$PATH bash scripts/verify-production-provenance.sh"]
+  },
+  "staging": {"url": "https://hourly-dev.vercel.app", "health": 200, "db": "ok", "unauthenticated_auth_me": 401, "unauthenticated_reminders_run": 401, "database_separation": "not established by public probes"},
+  "legal": {
+    "package": "docs/legal/pilot-drafts/",
+    "status": "substantive AI-prepared drafts; not approved/executed",
+    "open_fact_sheet": "docs/legal/pilot-drafts/OPEN_FACTS_AND_EXECUTION.md",
+    "required_owner_school_acts": ["operator and school entities and authorized signatories", "executed pilot agreement and DPA", "approved records inventory/retention/deletion/holds", "named records/privacy/safeguarding/support contacts", "student notices and applicable consent path", "pilot dates/cohorts/supervision/stop conditions", "enabled providers and contractual facts", "final policy publication/version approval"],
+    "professional_review": "not obtained; user declined; not represented as a universal statutory prerequisite"
+  },
+  "historical_evidence_not_to_reopen_as_absent": {
+    "canvas": "docs/qa/evidence/2026-09-07-canvas-integration/README.md and raw OAuth log record real sandbox OAuth/course/preview/apply/disconnect; school-controlled live tenant is a separate gate",
+    "public_a11y": "Prior session message 172232 records desktop/mobile public axe zero violations after CSP/mobile patches; not current full authenticated role audit",
+    "qr_live": "Prior session message 173758 records staff login and invalid share page isolation; valid share test blocked by zero eligible synthetic attendance sessions",
+    "deployment_migrations": "Fresh current-platform build-log read establishes 74 migrations/schema match, superseding old blanket not-deployed/unverified-schema claims"
+  },
+  "local_host": {"filesystem": "/", "reported_capacity": "100%", "available": "239M at first check", "impact": "development/audit reliability risk, not evidence production disk is full", "worker_runtime": "Node v22.23.2", "declared_supported_runtime": "Node >=24; README and .nvmrc specify Node 24", "test_interpretation": "Fresh server/focused/distributed/build checks passed on Node 22; these are real diagnostic evidence, not a fresh supported-Node-24 release gate. Current hosted build did run Node 24.x."},
+  "side_effects": "Read-only hosted checks; no deployment, remote migration, message, approval, production data mutation or deletion. Sanitized evidence file only."
+}

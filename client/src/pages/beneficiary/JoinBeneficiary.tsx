@@ -141,17 +141,17 @@ export default function JoinBeneficiary() {
             Account email: <strong>{invInfo?.sentTo}</strong>
           </p>
 
-          {error && <div className="mb-3 p-3 bg-[var(--er-bg)] border border-[var(--er-b)] rounded text-[var(--er-t)] text-sm">{error}</div>}
+          {error && <div role="alert" className="mb-3 p-3 bg-[var(--er-bg)] border border-[var(--er-b)] rounded text-[var(--er-t)] text-sm">{error}</div>}
 
           <form onSubmit={handleAccept} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-[var(--text)] mb-1">Your Name</label>
-              <input type="text" value={name} onChange={(e) => setName(e.target.value)} required
+              <label htmlFor="partner-invite-name" className="block text-sm font-medium text-[var(--text)] mb-1">Your Name</label>
+              <input id="partner-invite-name" type="text" value={name} onChange={(e) => setName(e.target.value)} required
                 className="w-full px-3 py-2.5 border border-[var(--border-s)] rounded-[3px] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--action)]" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[var(--text)] mb-1">Password</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
+              <label htmlFor="partner-invite-password" className="block text-sm font-medium text-[var(--text)] mb-1">Password</label>
+              <input id="partner-invite-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
                 className="w-full px-3 py-2.5 border border-[var(--border-s)] rounded-[3px] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--action)]" />
               {password.length > 0 && (
                 <ul className="mt-2 space-y-0.5">

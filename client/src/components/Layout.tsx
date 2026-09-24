@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { api } from "../lib/api";
 
@@ -9,6 +9,7 @@ export default function Layout() {
   const navigate = useNavigate();
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileMenuTrigger = useRef<HTMLButtonElement>(null);
 
   const handleLogout = () => {
     logout();
@@ -102,18 +103,27 @@ export default function Layout() {
               </Link>
             ))}
             {overflowNavItems.length > 0 && (
-              <div className="relative flex items-stretch">
+              <div className="relative flex items-stretch" onKeyDown={(event) => {
+                if (event.key === "Escape" && mobileMenuOpen) {
+                  setMobileMenuOpen(false);
+                  mobileMenuTrigger.current?.focus();
+                }
+              }}>
                 <button
+                  ref={mobileMenuTrigger}
+                  type="button"
                   onClick={() => setMobileMenuOpen((prev) => !prev)}
                   className="flex items-center px-3 text-white/60 hover:text-white border-b-2 border-transparent"
                   aria-label="More navigation items"
+                  aria-expanded={mobileMenuOpen}
+                  aria-controls={mobileMenuOpen ? "mobile-overflow-navigation" : undefined}
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v.01M12 12v.01M12 19v.01" />
                   </svg>
                 </button>
                 {mobileMenuOpen && (
-                  <div className="absolute right-0 top-full mt-1 w-48 border border-[var(--border)] rounded-[3px] py-1 z-50" style={{ background: "var(--surface)" }}>
+                  <div id="mobile-overflow-navigation" className="absolute right-0 top-full mt-1 w-48 border border-[var(--border)] rounded-[3px] py-1 z-50" style={{ background: "var(--surface)" }}>
                     {overflowNavItems.map((item) => (
                       <Link
                         key={item.path}

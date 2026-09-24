@@ -652,6 +652,7 @@ router.get("/audit/:sessionId", authenticate, async (req: Request, res: Response
         user: {
           select: {
             id: true,
+            schoolId: true,
             classroom: { select: { schoolId: true } },
             cohort: { select: { schoolId: true } },
           },
@@ -688,6 +689,19 @@ router.get("/audit/:sessionId", authenticate, async (req: Request, res: Response
         actor: { select: { id: true, name: true, role: true } },
       },
       orderBy: { createdAt: "asc" },
+    });
+    const subjectSchoolId = session.user.schoolId
+      ?? session.user.cohort?.schoolId
+      ?? session.user.classroom?.schoolId
+      ?? await resolveStudentSchoolId(session.userId)
+      ?? undefined;
+    await logDataAccess({
+      actorId,
+      action: "VIEW_SESSION_AUDIT",
+      targetType: "STUDENT",
+      targetId: session.userId,
+      schoolId: subjectSchoolId,
+      details: { sessionId: session.id },
     });
     res.json(logs);
   } catch (err) {

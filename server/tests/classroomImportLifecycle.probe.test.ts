@@ -16,6 +16,7 @@ before(async () => {
   process.env.NODE_ENV = "test";
   delete process.env.VERCEL_ENV;
   process.env.EMAIL_DELIVERY_MODE = "log";
+  process.env.GOOGLE_CLASSROOM_ENABLE_MOCK = "true";
   prisma = (await import("../src/lib/prisma")).default;
   db = prisma as any;
   app = (await import("../src/index")).default;

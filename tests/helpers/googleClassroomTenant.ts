@@ -213,7 +213,7 @@ export async function startMockGoogleClassroomTenant(scenario: GoogleClassroomTe
     res.end(JSON.stringify({ error: "not_found" }));
   });
 
-  await new Promise<void>((resolve) => server.listen(39102, "127.0.0.1", () => resolve()));
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", () => resolve()));
   const address = server.address() as AddressInfo;
   const baseUrl = `http://127.0.0.1:${address.port}`;
 

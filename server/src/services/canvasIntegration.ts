@@ -18,7 +18,11 @@ import {
 import { getCanvasMockDataset, type CanvasMockDataset, type CanvasMockScenario } from "./canvasMock";
 import { partitionStudentsWithinSection } from "./canvasSyncNormalization";
 import { isMappingInSelectedSyncScope, selectedSectionIdsForCleanup } from "./lmsSyncScope";
-import { finalizeFailedApply, runExclusiveApplyTransaction } from "./lmsSyncApply";
+import {
+  createLmsApplyAuditRecord,
+  finalizeFailedApply,
+  runExclusiveApplyTransaction,
+} from "./lmsSyncApply";
 import { assertOAuthAdministrator, claimOAuthState, createOAuthState, storeOAuthState } from "../lib/oauthState";
 
 const CANVAS_ENABLE_MOCK = process.env.CANVAS_ENABLE_MOCK === "true";
@@ -46,7 +50,7 @@ const canvasConnectSchema = z.discriminatedUnion("mode", [
     mode: z.literal("MOCK"),
     baseUrl: z.string().url().optional(),
     displayName: z.string().min(1).max(255).optional(),
-    mockScenario: z.enum(["default", "renamed", "archived", "deleted", "student_removed"]).optional(),
+    mockScenario: z.enum(["default", "renamed", "archived", "deleted", "student_removed", "same_section_duplicate"]).optional(),
   }).strict(),
   z.object({
     mode: z.literal("OAUTH"),
@@ -1336,7 +1340,7 @@ async function runCanvasSync(params: {
       mapping,
       selectedExternalCourseIds,
       selectedSectionIds,
-      mappingParent: "section",
+      mappingParent: "course",
     }) && !activeSectionIds.has(mapping.externalId)
   );
   for (const mapping of mappedSectionsToArchive) {
@@ -1382,6 +1386,17 @@ async function runCanvasSync(params: {
     }
   }
 
+  if (params.mode === "APPLY") {
+    await createLmsApplyAuditRecord({
+      db,
+      actorId: params.actorId,
+      schoolId: params.schoolId,
+      provider: "CANVAS",
+      scenario: dataset.scenario,
+      summary: summary.counts,
+    });
+  }
+
   const nextStatus =
     summary.counts.errors > 0
       ? summary.operations.length > summary.counts.errors
@@ -1425,8 +1440,9 @@ async function runCanvasSync(params: {
     });
   };
 
+  let result: { connection: any; job: any; summary: SyncSummary };
   try {
-    const result = params.mode === "APPLY"
+    result = params.mode === "APPLY"
       ? await runExclusiveApplyTransaction({
           connectionId: connection.id,
           previousSyncJobId: connection.lastSyncJobId,
@@ -1434,19 +1450,6 @@ async function runCanvasSync(params: {
           run: runPlan,
         })
       : await runPlan(basePrisma);
-    await logDataAccess({
-      actorId: params.actorId,
-      action: params.mode === "APPLY" ? "CANVAS_SYNC_APPLY" : "CANVAS_SYNC_PREVIEW",
-      targetType: "school",
-      targetId: params.schoolId,
-      schoolId: params.schoolId,
-      details: {
-        provider: "CANVAS",
-        scenario: dataset.scenario,
-        summary: result.summary.counts,
-      },
-    });
-    return result;
   } catch (error) {
     if (params.mode === "APPLY") {
       await finalizeFailedApply({
@@ -1458,6 +1461,22 @@ async function runCanvasSync(params: {
     }
     throw error;
   }
+
+  if (params.mode !== "APPLY") {
+    await logDataAccess({
+      actorId: params.actorId,
+      action: "CANVAS_SYNC_PREVIEW",
+      targetType: "school",
+      targetId: params.schoolId,
+      schoolId: params.schoolId,
+      details: {
+        provider: "CANVAS",
+        scenario: dataset.scenario,
+        summary: result.summary.counts,
+      },
+    });
+  }
+  return result;
 }
 
 export async function getCanvasOAuthUrlForSchool(params: {

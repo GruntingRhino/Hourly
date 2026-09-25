@@ -13,6 +13,22 @@ async function getCanvasStatus(ctx: APIRequestContext, token: string) {
   return res.json();
 }
 
+async function syncAllMockCourses(
+  ctx: APIRequestContext,
+  token: string,
+  mode: "preview" | "apply",
+) {
+  const coursesRes = await ctx.get(`${BASE}/api/integrations/canvas/courses`, auth(token));
+  expect(coursesRes.ok()).toBeTruthy();
+  const { courses } = await coursesRes.json();
+  const selectedExternalCourseIds = courses.map((course: { id: string | number }) => String(course.id));
+  expect(selectedExternalCourseIds.length).toBeGreaterThan(0);
+  return ctx.post(`${BASE}/api/integrations/canvas/${mode}`, {
+    ...auth(token),
+    data: { selectedExternalCourseIds },
+  });
+}
+
 test.describe("Canvas integration foundation", () => {
   test.describe.configure({ mode: "serial" });
 
@@ -31,7 +47,7 @@ test.describe("Canvas integration foundation", () => {
     });
     expect(connectRes.status()).toBe(201);
 
-    const previewRes = await ctx.post(`${BASE}/api/integrations/canvas/preview`, auth(adminToken));
+    const previewRes = await syncAllMockCourses(ctx, adminToken, "preview");
     expect(previewRes.ok()).toBeTruthy();
     const previewBody = await previewRes.json();
     expect(previewBody.summary.provider).toBe("CANVAS");
@@ -39,7 +55,7 @@ test.describe("Canvas integration foundation", () => {
       previewBody.summary.counts.cohortsCreated + previewBody.summary.counts.cohortsUpdated + previewBody.summary.counts.cohortsArchived
     ).toBeGreaterThan(0);
 
-    const applyRes = await ctx.post(`${BASE}/api/integrations/canvas/apply`, auth(adminToken));
+    const applyRes = await syncAllMockCourses(ctx, adminToken, "apply");
     expect(applyRes.ok()).toBeTruthy();
     const applyBody = await applyRes.json();
     expect(applyBody.summary.operations.length).toBeGreaterThan(0);
@@ -93,17 +109,19 @@ test.describe("Canvas integration foundation", () => {
     await ctx.dispose();
   });
 
-  test("duplicate student email is logged and existing GoodHours user is linked", async () => {
+  test("shared email across Canvas cohorts is allowed and an existing GoodHours user is linked", async () => {
     const ctx = await request.newContext();
     const adminToken = await getToken("schoolA");
 
     const errorsRes = await ctx.get(`${BASE}/api/integrations/canvas/errors`, auth(adminToken));
     expect(errorsRes.ok()).toBeTruthy();
     const errors = await errorsRes.json();
-    expect(errors.some((entry: any) => entry.code === "DUPLICATE_STUDENT_EMAIL")).toBeTruthy();
+    expect(errors.some((entry: any) => entry.code === "DUPLICATE_STUDENT_EMAIL")).toBeFalsy();
 
-    const linkedStudent = await loginAs(ctx, "existing.student@example.invalid", PW);
+    const studentCtx = await request.newContext();
+    const linkedStudent = await loginAs(studentCtx, "existing.student@example.invalid", PW);
     expect(linkedStudent.user.cohortId).toBeTruthy();
+    await studentCtx.dispose();
 
     const inviteListRes = await ctx.get(`${BASE}/api/cohorts`, auth(adminToken));
     expect(inviteListRes.ok()).toBeTruthy();
@@ -129,7 +147,7 @@ test.describe("Canvas integration foundation", () => {
     });
     expect(reconnectRes.status()).toBe(201);
 
-    const applyRes = await ctx.post(`${BASE}/api/integrations/canvas/apply`, auth(adminToken));
+    const applyRes = await syncAllMockCourses(ctx, adminToken, "apply");
     expect(applyRes.ok()).toBeTruthy();
 
     const cohortsRes = await ctx.get(`${BASE}/api/cohorts`, auth(adminToken));
@@ -149,7 +167,7 @@ test.describe("Canvas integration foundation", () => {
     });
     expect(connectRes.status()).toBe(201);
 
-    let applyRes = await ctx.post(`${BASE}/api/integrations/canvas/apply`, auth(adminToken));
+    let applyRes = await syncAllMockCourses(ctx, adminToken, "apply");
     expect(applyRes.ok()).toBeTruthy();
 
     let cohortsRes = await ctx.get(`${BASE}/api/cohorts`, auth(adminToken));
@@ -163,7 +181,7 @@ test.describe("Canvas integration foundation", () => {
     });
     expect(connectRes.status()).toBe(201);
 
-    applyRes = await ctx.post(`${BASE}/api/integrations/canvas/apply`, auth(adminToken));
+    applyRes = await syncAllMockCourses(ctx, adminToken, "apply");
     expect(applyRes.ok()).toBeTruthy();
 
     cohortsRes = await ctx.get(`${BASE}/api/cohorts`, auth(adminToken));
@@ -186,7 +204,7 @@ test.describe("Canvas integration foundation", () => {
     });
     expect(connectRes.status()).toBe(201);
 
-    let applyRes = await ctx.post(`${BASE}/api/integrations/canvas/apply`, auth(adminToken));
+    let applyRes = await syncAllMockCourses(ctx, adminToken, "apply");
     expect(applyRes.ok()).toBeTruthy();
 
     let cohortsRes = await ctx.get(`${BASE}/api/cohorts`, auth(adminToken));
@@ -198,7 +216,7 @@ test.describe("Canvas integration foundation", () => {
     const deleteRes = await ctx.delete(`${BASE}/api/cohorts/${imported.id}`, auth(adminToken));
     expect(deleteRes.status()).toBe(204);
 
-    applyRes = await ctx.post(`${BASE}/api/integrations/canvas/apply`, auth(adminToken));
+    applyRes = await syncAllMockCourses(ctx, adminToken, "apply");
     expect(applyRes.ok()).toBeTruthy();
 
     cohortsRes = await ctx.get(`${BASE}/api/cohorts`, auth(adminToken));
@@ -212,6 +230,14 @@ test.describe("Canvas integration foundation", () => {
   test("sync errors and disconnect flow are visible to school admins", async () => {
     const ctx = await request.newContext();
     const adminToken = await getToken("schoolA");
+
+    const connectRes = await ctx.post(`${BASE}/api/integrations/canvas/connect`, {
+      ...auth(adminToken),
+      data: { mode: "MOCK", mockScenario: "same_section_duplicate" },
+    });
+    expect(connectRes.status()).toBe(201);
+    const applyRes = await syncAllMockCourses(ctx, adminToken, "apply");
+    expect(applyRes.ok()).toBeTruthy();
 
     const errorsRes = await ctx.get(`${BASE}/api/integrations/canvas/errors`, auth(adminToken));
     expect(errorsRes.ok()).toBeTruthy();
@@ -237,7 +263,7 @@ test.describe("Canvas integration foundation", () => {
     });
     expect(connectRes.status()).toBe(201);
 
-    let applyRes = await ctx.post(`${BASE}/api/integrations/canvas/apply`, auth(adminToken));
+    let applyRes = await syncAllMockCourses(ctx, adminToken, "apply");
     expect(applyRes.ok()).toBeTruthy();
 
     connectRes = await ctx.post(`${BASE}/api/integrations/canvas/connect`, {
@@ -246,7 +272,7 @@ test.describe("Canvas integration foundation", () => {
     });
     expect(connectRes.status()).toBe(201);
 
-    applyRes = await ctx.post(`${BASE}/api/integrations/canvas/apply`, auth(adminToken));
+    applyRes = await syncAllMockCourses(ctx, adminToken, "apply");
     expect(applyRes.ok()).toBeTruthy();
 
     const cohortsRes = await ctx.get(`${BASE}/api/cohorts`, auth(adminToken));

@@ -28,6 +28,12 @@ for (const [name, source] of Object.entries({ canvas, classroom })) {
     assert.match(source, /ensureStudentCohortMembership\(\{[\s\S]*?db: prisma/);
     assert.match(source, /reconcileRemovedStudentEnrollment\(\{[\s\S]*?db: prisma/);
     assert.match(source, /if \(params\.mode !== "APPLY"\)[^\n]*\n\s*summary\.operations\.push\(\{ type: "teacher-assignment"/);
+    assert.match(source, /if \(params\.mode === "APPLY"\)[\s\S]*?createLmsApplyAuditRecord\(\{/);
+    const transactionCatch = source.indexOf('stage: "APPLY_TRANSACTION"');
+    const previewAudit = source.indexOf('if (params.mode !== "APPLY")', transactionCatch);
+    assert.ok(transactionCatch >= 0 && previewAudit > transactionCatch);
+    assert.match(source.slice(previewAudit), /await logDataAccess\(\{/);
+    assert.doesNotMatch(source.slice(transactionCatch), /sync audit log failed/);
   });
 }
 

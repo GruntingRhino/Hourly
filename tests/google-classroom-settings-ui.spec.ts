@@ -14,15 +14,17 @@ test("school settings integrations tab hides the session banner and runs Google 
   await expect(page.getByRole("heading", { name: "Google Classroom Integration" })).toBeVisible();
   await expect(page.getByText("Stay signed in across sessions?")).toHaveCount(0);
   await expect(page.getByText("Each GoodHours school connects to one Google Classroom school tenant.")).toBeVisible();
-  await expect(page.getByPlaceholder("https://classroom.googleapis.com")).toBeVisible();
 
   await page.getByTestId("google-classroom-mode").selectOption("MOCK");
+  await expect(page.getByTestId("google-classroom-base-url")).toBeVisible();
   await page.getByTestId("google-classroom-scenario").selectOption("default");
   await page.getByTestId("google-classroom-connect").click();
   await expect(page.getByText("Google Classroom mock connection created.")).toBeVisible();
+  await page.getByTestId("google-classroom-course-gclass-course-bio").check();
 
   await page.getByTestId("google-classroom-preview").click();
   await expect(page.getByText("Google Classroom preview complete.")).toBeVisible({ timeout: 10000 });
+  await expect(page.getByTestId("google-classroom-apply")).toBeEnabled();
 
   await page.getByTestId("google-classroom-apply").click();
   await expect(page.getByText("Google Classroom sync applied.")).toBeVisible({ timeout: 10000 });

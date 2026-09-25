@@ -1,4 +1,4 @@
-export type CanvasMockScenario = "default" | "renamed" | "archived" | "deleted" | "student_removed";
+export type CanvasMockScenario = "default" | "renamed" | "archived" | "deleted" | "student_removed" | "same_section_duplicate";
 
 export type CanvasMockCourse = {
   id: string;
@@ -124,6 +124,22 @@ function buildStudentRemovedDataset(): CanvasMockDataset {
   };
 }
 
+function buildSameSectionDuplicateDataset(): CanvasMockDataset {
+  const dataset = buildDefaultDataset();
+  return {
+    ...dataset,
+    scenario: "same_section_duplicate",
+    enrollments: [
+      ...dataset.enrollments.map((enrollment) =>
+        enrollment.id === "e7"
+          ? { ...enrollment, sectionId: "canvas-section-bio-p1" }
+          : enrollment,
+      ),
+      { id: "e9", userId: "canvas-student-dup-b", sectionId: "canvas-section-bio-p1", role: "StudentEnrollment", workflowState: "active" },
+    ],
+  };
+}
+
 export function getCanvasMockDataset(scenario: CanvasMockScenario): CanvasMockDataset {
   switch (scenario) {
     case "renamed":
@@ -134,6 +150,8 @@ export function getCanvasMockDataset(scenario: CanvasMockScenario): CanvasMockDa
       return buildDeletedDataset();
     case "student_removed":
       return buildStudentRemovedDataset();
+    case "same_section_duplicate":
+      return buildSameSectionDuplicateDataset();
     case "default":
     default:
       return buildDefaultDataset();

@@ -324,7 +324,7 @@ export default function SchoolSettings() {
   const [transferIsError, setTransferIsError] = useState(false);
   const [canvasStatus, setCanvasStatus] = useState<IntegrationStatusResponse | null>(null);
   const [canvasErrors, setCanvasErrors] = useState<IntegrationSyncErrorEntry[]>([]);
-  const [canvasScenario, setCanvasScenario] = useState<"default" | "renamed" | "archived" | "deleted" | "student_removed">("default");
+  const [canvasScenario, setCanvasScenario] = useState<"default" | "renamed" | "archived" | "deleted" | "student_removed" | "same_section_duplicate">("default");
   const [canvasConnectMode, setCanvasConnectMode] = useState<"MOCK" | "OAUTH">("MOCK");
   const [canvasBaseUrl, setCanvasBaseUrl] = useState("https://canvas.mock.local");
   const [canvasBusyAction, setCanvasBusyAction] = useState<"" | "connect" | "disconnect" | "preview" | "apply">("");
@@ -338,7 +338,7 @@ export default function SchoolSettings() {
   const [canvasSelectedCourseIds, setCanvasSelectedCourseIds] = useState<string[]>([]);
   const [googleClassroomStatus, setGoogleClassroomStatus] = useState<IntegrationStatusResponse | null>(null);
   const [googleClassroomErrors, setGoogleClassroomErrors] = useState<IntegrationSyncErrorEntry[]>([]);
-  const [googleClassroomScenario, setGoogleClassroomScenario] = useState<"default" | "renamed" | "archived" | "deleted" | "student_removed">("default");
+  const [googleClassroomScenario, setGoogleClassroomScenario] = useState<"default" | "renamed" | "archived" | "deleted" | "student_removed" | "same_section_duplicate">("default");
   const [googleClassroomConnectMode, setGoogleClassroomConnectMode] = useState<"MOCK" | "OAUTH">("MOCK");
   const [googleClassroomBaseUrl, setGoogleClassroomBaseUrl] = useState("https://classroom.googleapis.com");
   const [googleClassroomBusyAction, setGoogleClassroomBusyAction] = useState<"" | "connect" | "disconnect" | "preview" | "apply">("");
@@ -432,7 +432,7 @@ export default function SchoolSettings() {
         setCanvasErrors(canvasErrs);
         setCanvasScenario(
           canvas.connection?.mode === "MOCK"
-            ? (canvas.connection.scenario as "default" | "renamed" | "archived" | "deleted" | "student_removed")
+            ? (canvas.connection.scenario as "default" | "renamed" | "archived" | "deleted" | "student_removed" | "same_section_duplicate")
             : "default"
         );
         setCanvasConnectMode(canvas.connection?.mode ?? (canvas.capabilities?.mockAllowed === false ? "OAUTH" : "MOCK"));
@@ -443,7 +443,7 @@ export default function SchoolSettings() {
         setGoogleClassroomErrors(classroomErrs);
         setGoogleClassroomScenario(
           classroom.connection?.mode === "MOCK"
-            ? (classroom.connection.scenario as "default" | "renamed" | "archived" | "deleted" | "student_removed")
+            ? (classroom.connection.scenario as "default" | "renamed" | "archived" | "deleted" | "student_removed" | "same_section_duplicate")
             : "default"
         );
         setGoogleClassroomConnectMode(classroom.connection?.mode ?? (classroom.capabilities?.mockAllowed === false ? "OAUTH" : "MOCK"));
@@ -482,7 +482,7 @@ export default function SchoolSettings() {
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams, tab]);
 
-  const reloadCanvasState = async () => {
+  const reloadCanvasState = async (preserveSelectedCourseIds?: string[]) => {
     const [status, errors, courseData] = await Promise.all([
       api.get<IntegrationStatusResponse>("/integrations/canvas/status"),
       api.get<IntegrationSyncErrorEntry[]>("/integrations/canvas/errors"),
@@ -492,16 +492,16 @@ export default function SchoolSettings() {
     setCanvasErrors(errors);
     setCanvasScenario(
       status.connection?.mode === "MOCK"
-        ? (status.connection.scenario as "default" | "renamed" | "archived" | "deleted" | "student_removed")
+        ? (status.connection.scenario as "default" | "renamed" | "archived" | "deleted" | "student_removed" | "same_section_duplicate")
         : canvasScenario
     );
     setCanvasConnectMode(status.connection?.mode ?? (status.capabilities?.mockAllowed === false ? "OAUTH" : canvasConnectMode));
     setCanvasBaseUrl(status.connection?.baseUrl ?? canvasBaseUrl);
     setCanvasCourses(courseData.courses);
-    setCanvasSelectedCourseIds(courseData.selectedExternalCourseIds);
+    setCanvasSelectedCourseIds(preserveSelectedCourseIds ?? courseData.selectedExternalCourseIds);
   };
 
-  const reloadGoogleClassroomState = async () => {
+  const reloadGoogleClassroomState = async (preserveSelectedCourseIds?: string[]) => {
     const [status, errors, courseData] = await Promise.all([
       api.get<IntegrationStatusResponse>("/integrations/googleClassroom/status"),
       api.get<IntegrationSyncErrorEntry[]>("/integrations/googleClassroom/errors"),
@@ -511,13 +511,13 @@ export default function SchoolSettings() {
     setGoogleClassroomErrors(errors);
     setGoogleClassroomScenario(
       status.connection?.mode === "MOCK"
-        ? (status.connection.scenario as "default" | "renamed" | "archived" | "deleted" | "student_removed")
+        ? (status.connection.scenario as "default" | "renamed" | "archived" | "deleted" | "student_removed" | "same_section_duplicate")
         : googleClassroomScenario
     );
     setGoogleClassroomConnectMode(status.connection?.mode ?? (status.capabilities?.mockAllowed === false ? "OAUTH" : googleClassroomConnectMode));
     setGoogleClassroomBaseUrl(status.connection?.baseUrl ?? googleClassroomBaseUrl);
     setGoogleClassroomCourses(courseData.courses);
-    setGoogleClassroomSelectedCourseIds(courseData.selectedExternalCourseIds);
+    setGoogleClassroomSelectedCourseIds(preserveSelectedCourseIds ?? courseData.selectedExternalCourseIds);
   };
 
   const handleCanvasConnect = async () => {
@@ -571,12 +571,13 @@ export default function SchoolSettings() {
     setCanvasMessage("");
     setCanvasIsError(false);
     try {
+      const selectedCourseIds = [...canvasSelectedCourseIds];
       const result = await api.post<{ summary: IntegrationSyncSummary }>("/integrations/canvas/preview", {
-        selectedExternalCourseIds: canvasSelectedCourseIds,
+        selectedExternalCourseIds: selectedCourseIds,
       });
       setCanvasPreview(result.summary);
       setCanvasMessage("Canvas preview complete.");
-      await reloadCanvasState();
+      await reloadCanvasState(selectedCourseIds);
     } catch (err: unknown) {
       setCanvasMessage(getErrorMessage(err, "Failed to preview Canvas sync"));
       setCanvasIsError(true);
@@ -655,12 +656,13 @@ export default function SchoolSettings() {
     setGoogleClassroomMessage("");
     setGoogleClassroomIsError(false);
     try {
+      const selectedCourseIds = [...googleClassroomSelectedCourseIds];
       const result = await api.post<{ summary: IntegrationSyncSummary }>("/integrations/googleClassroom/preview", {
-        selectedExternalCourseIds: googleClassroomSelectedCourseIds,
+        selectedExternalCourseIds: selectedCourseIds,
       });
       setGoogleClassroomPreview(result.summary);
       setGoogleClassroomMessage("Google Classroom preview complete.");
-      await reloadGoogleClassroomState();
+      await reloadGoogleClassroomState(selectedCourseIds);
     } catch (err: unknown) {
       setGoogleClassroomMessage(getErrorMessage(err, "Failed to preview Google Classroom sync"));
       setGoogleClassroomIsError(true);
@@ -1831,6 +1833,7 @@ export default function SchoolSettings() {
             <option value="archived">Archived Course</option>
             <option value="deleted">Deleted Section</option>
             <option value="student_removed">Student Removed</option>
+            <option value="same_section_duplicate">Same-Section Duplicate</option>
           </select>
             </div>
             <div>
@@ -2069,6 +2072,7 @@ export default function SchoolSettings() {
                 <option value="archived">Archived Class</option>
                 <option value="deleted">Deleted Class</option>
                 <option value="student_removed">Student Removed</option>
+                <option value="same_section_duplicate">Same-Class Duplicate</option>
               </select>
             </div>
             <div>

@@ -45,6 +45,24 @@ test("an omitted existing section under a selected course remains in cleanup sco
   assert.equal(selectedSectionIds.has("section-b"), false);
   assert.equal(
     isMappingInSelectedSyncScope({
+      mapping: mappings[0],
+      selectedExternalCourseIds: ["course-a"],
+      selectedSectionIds,
+      mappingParent: "course",
+    }),
+    true,
+  );
+  assert.equal(
+    isMappingInSelectedSyncScope({
+      mapping: mappings[1],
+      selectedExternalCourseIds: ["course-a"],
+      selectedSectionIds,
+      mappingParent: "course",
+    }),
+    false,
+  );
+  assert.equal(
+    isMappingInSelectedSyncScope({
       mapping: mappings[3],
       selectedExternalCourseIds: ["course-a"],
       selectedSectionIds,

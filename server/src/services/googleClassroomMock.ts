@@ -1,4 +1,4 @@
-export type GoogleClassroomMockScenario = "default" | "renamed" | "archived" | "deleted" | "student_removed";
+export type GoogleClassroomMockScenario = "default" | "renamed" | "archived" | "deleted" | "student_removed" | "same_section_duplicate";
 
 export type GoogleClassroomMockCourse = {
   id: string;
@@ -98,6 +98,18 @@ function buildStudentRemovedDataset(): GoogleClassroomMockDataset {
   };
 }
 
+function buildSameSectionDuplicateDataset(): GoogleClassroomMockDataset {
+  const dataset = buildDefaultDataset();
+  return {
+    ...dataset,
+    scenario: "same_section_duplicate",
+    enrollments: [
+      ...dataset.enrollments,
+      { id: "student:gclass-course-bio:gclass-student-dup-b:duplicate", userId: "gclass-student-dup-b", courseId: "gclass-course-bio", role: "StudentEnrollment", workflowState: "active" },
+    ],
+  };
+}
+
 export function getGoogleClassroomMockDataset(scenario: GoogleClassroomMockScenario): GoogleClassroomMockDataset {
   switch (scenario) {
     case "renamed":
@@ -108,6 +120,8 @@ export function getGoogleClassroomMockDataset(scenario: GoogleClassroomMockScena
       return buildDeletedDataset();
     case "student_removed":
       return buildStudentRemovedDataset();
+    case "same_section_duplicate":
+      return buildSameSectionDuplicateDataset();
     case "default":
     default:
       return buildDefaultDataset();

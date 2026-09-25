@@ -20,9 +20,11 @@ test("school settings integrations tab hides the session banner and runs Canvas 
   await page.getByTestId("canvas-scenario").selectOption("default");
   await page.getByTestId("canvas-connect").click();
   await expect(page.getByText("Canvas mock connection created.")).toBeVisible();
+  await page.getByTestId("canvas-course-canvas-course-bio").check();
 
   await page.getByTestId("canvas-preview").click();
   await expect(page.getByText("Canvas preview complete.")).toBeVisible({ timeout: 10000 });
+  await expect(page.getByTestId("canvas-apply")).toBeEnabled();
 
   await page.getByTestId("canvas-apply").click();
   await expect(page.getByText("Canvas sync applied.")).toBeVisible({ timeout: 10000 });

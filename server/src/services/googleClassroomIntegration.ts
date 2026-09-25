@@ -21,7 +21,11 @@ import {
 import { getGoogleClassroomMockDataset, type GoogleClassroomMockDataset, type GoogleClassroomMockScenario } from "./googleClassroomMock";
 import { createClassroomStudentEmailRegistry } from "./googleClassroomSyncNormalization";
 import { isMappingInSelectedSyncScope, selectedSectionIdsForCleanup } from "./lmsSyncScope";
-import { finalizeFailedApply, runExclusiveApplyTransaction } from "./lmsSyncApply";
+import {
+  createLmsApplyAuditRecord,
+  finalizeFailedApply,
+  runExclusiveApplyTransaction,
+} from "./lmsSyncApply";
 import { isPubliclyDeployed } from "../lib/isProdLike";
 import { assertOAuthAdministrator, claimOAuthState, createOAuthState, storeOAuthState } from "../lib/oauthState";
 
@@ -49,7 +53,7 @@ const googleClassroomConnectSchema = z.discriminatedUnion("mode", [
     mode: z.literal("MOCK"),
     baseUrl: z.string().url().optional(),
     displayName: z.string().min(1).max(255).optional(),
-    mockScenario: z.enum(["default", "renamed", "archived", "deleted", "student_removed"]).optional(),
+    mockScenario: z.enum(["default", "renamed", "archived", "deleted", "student_removed", "same_section_duplicate"]).optional(),
   }).strict(),
   z.object({
     mode: z.literal("OAUTH"),
@@ -1416,6 +1420,17 @@ async function runGoogleClassroomSync(params: {
     }
   }
 
+  if (params.mode === "APPLY") {
+    await createLmsApplyAuditRecord({
+      db,
+      actorId: params.actorId,
+      schoolId: params.schoolId,
+      provider: "GOOGLE_CLASSROOM",
+      scenario: dataset.scenario,
+      summary: summary.counts,
+    });
+  }
+
   const nextStatus =
     summary.counts.errors > 0
       ? summary.operations.length > summary.counts.errors
@@ -1459,8 +1474,9 @@ async function runGoogleClassroomSync(params: {
     });
   };
 
+  let result: { connection: any; job: any; summary: SyncSummary };
   try {
-    const result = params.mode === "APPLY"
+    result = params.mode === "APPLY"
       ? await runExclusiveApplyTransaction({
           connectionId: connection.id,
           previousSyncJobId: connection.lastSyncJobId,
@@ -1468,19 +1484,6 @@ async function runGoogleClassroomSync(params: {
           run: runPlan,
         })
       : await runPlan(basePrisma);
-    await logDataAccess({
-      actorId: params.actorId,
-      action: params.mode === "APPLY" ? "GOOGLE_CLASSROOM_SYNC_APPLY" : "GOOGLE_CLASSROOM_SYNC_PREVIEW",
-      targetType: "school",
-      targetId: params.schoolId,
-      schoolId: params.schoolId,
-      details: {
-        provider: "GOOGLE_CLASSROOM",
-        scenario: dataset.scenario,
-        summary: result.summary.counts,
-      },
-    });
-    return result;
   } catch (error) {
     if (params.mode === "APPLY") {
       await finalizeFailedApply({
@@ -1492,6 +1495,22 @@ async function runGoogleClassroomSync(params: {
     }
     throw error;
   }
+
+  if (params.mode !== "APPLY") {
+    await logDataAccess({
+      actorId: params.actorId,
+      action: "GOOGLE_CLASSROOM_SYNC_PREVIEW",
+      targetType: "school",
+      targetId: params.schoolId,
+      schoolId: params.schoolId,
+      details: {
+        provider: "GOOGLE_CLASSROOM",
+        scenario: dataset.scenario,
+        summary: result.summary.counts,
+      },
+    });
+  }
+  return result;
 }
 
 export async function getGoogleClassroomOAuthUrlForSchool(params: {

@@ -4,6 +4,30 @@ import { runSerializableTransaction } from "../lib/serializableTransaction";
 
 export type SyncApplyDatabase = Prisma.TransactionClient;
 
+export async function createLmsApplyAuditRecord(params: {
+  db: SyncApplyDatabase;
+  actorId: string;
+  schoolId: string;
+  provider: "CANVAS" | "GOOGLE_CLASSROOM";
+  scenario: string;
+  summary: Record<string, number>;
+}): Promise<void> {
+  await params.db.dataAccessLog.create({
+    data: {
+      actorId: params.actorId,
+      action: `${params.provider}_SYNC_APPLY`,
+      targetType: "school",
+      targetId: params.schoolId,
+      schoolId: params.schoolId,
+      details: JSON.stringify({
+        provider: params.provider,
+        scenario: params.scenario,
+        summary: params.summary,
+      }),
+    },
+  });
+}
+
 export class LmsSyncInProgressError extends Error {
   readonly status = 409;
   readonly code = "LMS_SYNC_IN_PROGRESS";

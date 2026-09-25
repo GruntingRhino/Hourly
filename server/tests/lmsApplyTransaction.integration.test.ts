@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import prisma from "../src/lib/prisma";
 import {
+  createLmsApplyAuditRecord,
   finalizeFailedApply,
   LmsSyncInProgressError,
   runExclusiveApplyTransaction,
@@ -124,6 +125,49 @@ test("failed LMS apply rolls back domain writes and finalizes its job", async ()
     assert.match(failedJob.summary, /APPLY_TRANSACTION/);
     assert.equal(failedConnection.status, "ERROR");
     assert.equal(failedConnection.lastSyncStatus, "FAILED");
+  } finally {
+    await cleanup(fixture);
+  }
+});
+
+test("APPLY audit failure rolls back domain writes and preserves terminal state", async () => {
+  const fixture = await createFixture("audit-failure");
+  const job = await createJob(fixture, "synthetic audit failure");
+  try {
+    await assert.rejects(
+      runExclusiveApplyTransaction({
+        connectionId: fixture.connection.id,
+        previousSyncJobId: fixture.previousJob.id,
+        syncJobId: job.id,
+        run: async (tx) => {
+          await tx.cohort.create({
+            data: {
+              name: `Must Roll Back On Audit Failure ${fixture.suffix}`,
+              schoolId: fixture.school.id,
+              status: "DRAFT",
+            },
+          });
+          await createLmsApplyAuditRecord({
+            db: tx,
+            actorId: "missing-audit-actor",
+            schoolId: fixture.school.id,
+            provider: "CANVAS",
+            scenario: "synthetic",
+            summary: { errors: 0 },
+          });
+        },
+      }),
+      /Foreign key constraint violated|P2003/,
+    );
+
+    assert.equal(await db.cohort.count({ where: { schoolId: fixture.school.id } }), 0);
+    assert.equal(
+      await db.dataAccessLog.count({ where: { schoolId: fixture.school.id, action: "CANVAS_SYNC_APPLY" } }),
+      0,
+    );
+    const connection = await db.integrationConnection.findUnique({ where: { id: fixture.connection.id } });
+    assert.equal(connection.lastSyncJobId, fixture.previousJob.id);
+    assert.notEqual(connection.lastSyncStatus, "RUNNING");
   } finally {
     await cleanup(fixture);
   }

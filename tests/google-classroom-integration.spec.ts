@@ -102,7 +102,7 @@ test.describe("Google Classroom integration foundation", () => {
     const errors = await errorsRes.json();
     expect(errors.some((entry: any) => entry.code === "DUPLICATE_STUDENT_EMAIL")).toBeTruthy();
 
-    const linkedStudent = await loginAs(ctx, "abhay.sivaram+8@gmail.com", PW);
+    const linkedStudent = await loginAs(ctx, "existing.student@example.invalid", PW);
     expect(linkedStudent.user.cohortId).toBeTruthy();
 
     const inviteListRes = await ctx.get(`${BASE}/api/cohorts`, auth(adminToken));
@@ -258,7 +258,7 @@ test.describe("Google Classroom integration foundation", () => {
     const detailRes = await ctx.get(`${BASE}/api/cohorts/${biology.id}`, auth(adminToken));
     expect(detailRes.ok()).toBeTruthy();
     const detail = await detailRes.json();
-    const removedInvite = detail.invitations.find((inv: any) => inv.email === "gclass.student.one@schoola.edu");
+    const removedInvite = detail.invitations.find((inv: any) => inv.email === "gclass.student.one@example.invalid");
     expect(removedInvite?.status).toBe("REVOKED");
 
     await ctx.dispose();

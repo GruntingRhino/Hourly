@@ -37,13 +37,13 @@ export type CanvasMockDataset = {
 };
 
 const BASE_USERS: CanvasMockUser[] = [
-  { id: "canvas-teacher-1", name: "Canvas Teacher Alpha", email: "canvas.teacher.alpha@schoola.edu", role: "teacher" },
-  { id: "canvas-teacher-2", name: "Canvas Teacher Beta", email: "canvas.teacher.beta@schoola.edu", role: "teacher" },
-  { id: "canvas-student-existing", name: "PW Existing Canvas Student", email: "abhay.sivaram+8@gmail.com", role: "student" },
-  { id: "canvas-student-new-1", name: "Canvas Student One", email: "canvas.student.one@schoola.edu", role: "student" },
-  { id: "canvas-student-new-2", name: "Canvas Student Two", email: "canvas.student.two@schoola.edu", role: "student" },
-  { id: "canvas-student-dup-a", name: "Canvas Duplicate A", email: "canvas.duplicate@schoola.edu", role: "student" },
-  { id: "canvas-student-dup-b", name: "Canvas Duplicate B", email: "canvas.duplicate@schoola.edu", role: "student" },
+  { id: "canvas-teacher-1", name: "Canvas Teacher Alpha", email: "canvas.teacher.alpha@example.invalid", role: "teacher" },
+  { id: "canvas-teacher-2", name: "Canvas Teacher Beta", email: "canvas.teacher.beta@example.invalid", role: "teacher" },
+  { id: "canvas-student-existing", name: "PW Existing Canvas Student", email: "existing.student@example.invalid", role: "student" },
+  { id: "canvas-student-new-1", name: "Canvas Student One", email: "canvas.student.one@example.invalid", role: "student" },
+  { id: "canvas-student-new-2", name: "Canvas Student Two", email: "canvas.student.two@example.invalid", role: "student" },
+  { id: "canvas-student-dup-a", name: "Canvas Duplicate A", email: "canvas.duplicate@example.invalid", role: "student" },
+  { id: "canvas-student-dup-b", name: "Canvas Duplicate B", email: "canvas.duplicate@example.invalid", role: "student" },
 ];
 
 function buildDefaultDataset(): CanvasMockDataset {

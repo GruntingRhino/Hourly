@@ -27,13 +27,13 @@ const REAL_API_STUDENT = {
       familyName: "Sivaram",
       fullName: "Abhay Sivaram",
     },
-    emailAddress: "abhaysivaram31@gmail.com",
+    emailAddress: "existing.student@example.invalid",
     photoUrl: "//lh3.googleusercontent.com/a/ACg8ocK-XU3H2rnLjGxLK4lytZFk4UA6Hgeb1ZyjduKIHh4h1DWd_Q=mo",
   },
 } satisfies GoogleClassroomApiUser & { courseId: string };
 
 test("real API roster shape resolves email (was silently dropped)", () => {
-  assert.equal(resolveClassroomUserEmail(REAL_API_STUDENT), "abhaysivaram31@gmail.com");
+  assert.equal(resolveClassroomUserEmail(REAL_API_STUDENT), "existing.student@example.invalid");
 });
 
 test("real API roster shape resolves full name (was [object Object])", () => {

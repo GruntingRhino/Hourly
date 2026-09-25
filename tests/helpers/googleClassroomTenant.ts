@@ -53,30 +53,30 @@ function buildScenarioData(scenario: GoogleClassroomTenantScenario) {
 
   const teachersByCourse: Record<string, TenantRosterUser[]> = {
     "oauth-course-bio": [
-      { userId: "oauth-teacher-1", profile: { id: "oauth-teacher-1", name: "OAuth Teacher Alpha", fullName: "OAuth Teacher Alpha" }, profileEmail: "oauth.teacher.alpha@schoola.edu" },
+      { userId: "oauth-teacher-1", profile: { id: "oauth-teacher-1", name: "OAuth Teacher Alpha", fullName: "OAuth Teacher Alpha" }, profileEmail: "oauth.teacher.alpha@example.invalid" },
     ],
     "oauth-course-service": [
-      { userId: "oauth-teacher-2", profile: { id: "oauth-teacher-2", name: "OAuth Teacher Beta", fullName: "OAuth Teacher Beta" }, profileEmail: "oauth.teacher.beta@schoola.edu" },
+      { userId: "oauth-teacher-2", profile: { id: "oauth-teacher-2", name: "OAuth Teacher Beta", fullName: "OAuth Teacher Beta" }, profileEmail: "oauth.teacher.beta@example.invalid" },
     ],
     "oauth-course-advisory": [
-      { userId: "oauth-teacher-3", profile: { id: "oauth-teacher-3", name: "OAuth Teacher Gamma", fullName: "OAuth Teacher Gamma" }, profileEmail: "oauth.teacher.gamma@schoola.edu" },
+      { userId: "oauth-teacher-3", profile: { id: "oauth-teacher-3", name: "OAuth Teacher Gamma", fullName: "OAuth Teacher Gamma" }, profileEmail: "oauth.teacher.gamma@example.invalid" },
     ],
   };
 
   const studentsByCourse: Record<string, TenantRosterUser[]> = {
     "oauth-course-bio": [
-      { userId: "oauth-student-existing", profile: { id: "oauth-student-existing", name: "PW Existing Classroom Student", fullName: "PW Existing Classroom Student" }, profileEmail: "abhay.sivaram+8@gmail.com" },
+      { userId: "oauth-student-existing", profile: { id: "oauth-student-existing", name: "PW Existing Classroom Student", fullName: "PW Existing Classroom Student" }, profileEmail: "existing.student@example.invalid" },
       ...(scenario === "student_removed" ? [] : [
-        { userId: "oauth-student-1", profile: { id: "oauth-student-1", name: "OAuth Student One", fullName: "OAuth Student One" }, profileEmail: "oauth.student.one@schoola.edu" },
+        { userId: "oauth-student-1", profile: { id: "oauth-student-1", name: "OAuth Student One", fullName: "OAuth Student One" }, profileEmail: "oauth.student.one@example.invalid" },
       ]),
-      { userId: "oauth-student-dup-1", profile: { id: "oauth-student-dup-1", name: "OAuth Duplicate One", fullName: "OAuth Duplicate One" }, profileEmail: "oauth.duplicate@schoola.edu" },
+      { userId: "oauth-student-dup-1", profile: { id: "oauth-student-dup-1", name: "OAuth Duplicate One", fullName: "OAuth Duplicate One" }, profileEmail: "oauth.duplicate@example.invalid" },
     ],
     "oauth-course-service": [
-      { userId: "oauth-student-2", profile: { id: "oauth-student-2", name: "OAuth Student Two", fullName: "OAuth Student Two" }, profileEmail: "oauth.student.two@schoola.edu" },
-      { userId: "oauth-student-dup-2", profile: { id: "oauth-student-dup-2", name: "OAuth Duplicate Two", fullName: "OAuth Duplicate Two" }, profileEmail: "oauth.duplicate@schoola.edu" },
+      { userId: "oauth-student-2", profile: { id: "oauth-student-2", name: "OAuth Student Two", fullName: "OAuth Student Two" }, profileEmail: "oauth.student.two@example.invalid" },
+      { userId: "oauth-student-dup-2", profile: { id: "oauth-student-dup-2", name: "OAuth Duplicate Two", fullName: "OAuth Duplicate Two" }, profileEmail: "oauth.duplicate@example.invalid" },
     ],
     "oauth-course-advisory": [
-      { userId: "oauth-student-3", profile: { id: "oauth-student-3", name: "OAuth Student Three", fullName: "OAuth Student Three" }, profileEmail: "oauth.student.three@schoola.edu" },
+      { userId: "oauth-student-3", profile: { id: "oauth-student-3", name: "OAuth Student Three", fullName: "OAuth Student Three" }, profileEmail: "oauth.student.three@example.invalid" },
     ],
   };
 

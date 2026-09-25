@@ -30,13 +30,13 @@ export type GoogleClassroomMockDataset = {
 };
 
 const BASE_USERS: GoogleClassroomMockUser[] = [
-  { id: "gclass-teacher-1", name: "Google Classroom Teacher Alpha", email: "gclass.teacher.alpha@schoola.edu", role: "teacher" },
-  { id: "gclass-teacher-2", name: "Google Classroom Teacher Beta", email: "gclass.teacher.beta@schoola.edu", role: "teacher" },
-  { id: "gclass-student-existing", name: "PW Existing Classroom Student", email: "abhay.sivaram+8@gmail.com", role: "student" },
-  { id: "gclass-student-new-1", name: "Google Classroom Student One", email: "gclass.student.one@schoola.edu", role: "student" },
-  { id: "gclass-student-new-2", name: "Google Classroom Student Two", email: "gclass.student.two@schoola.edu", role: "student" },
-  { id: "gclass-student-dup-a", name: "Google Classroom Duplicate A", email: "gclass.duplicate@schoola.edu", role: "student" },
-  { id: "gclass-student-dup-b", name: "Google Classroom Duplicate B", email: "gclass.duplicate@schoola.edu", role: "student" },
+  { id: "gclass-teacher-1", name: "Google Classroom Teacher Alpha", email: "gclass.teacher.alpha@example.invalid", role: "teacher" },
+  { id: "gclass-teacher-2", name: "Google Classroom Teacher Beta", email: "gclass.teacher.beta@example.invalid", role: "teacher" },
+  { id: "gclass-student-existing", name: "PW Existing Classroom Student", email: "existing.student@example.invalid", role: "student" },
+  { id: "gclass-student-new-1", name: "Google Classroom Student One", email: "gclass.student.one@example.invalid", role: "student" },
+  { id: "gclass-student-new-2", name: "Google Classroom Student Two", email: "gclass.student.two@example.invalid", role: "student" },
+  { id: "gclass-student-dup-a", name: "Google Classroom Duplicate A", email: "gclass.duplicate@example.invalid", role: "student" },
+  { id: "gclass-student-dup-b", name: "Google Classroom Duplicate B", email: "gclass.duplicate@example.invalid", role: "student" },
 ];
 
 function buildDefaultDataset(): GoogleClassroomMockDataset {

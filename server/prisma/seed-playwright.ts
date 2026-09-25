@@ -12,7 +12,7 @@
  *   +5  abhay.sivaram+5@gmail.com  STUDENT        → School A, Cohort A
  *   +6  abhay.sivaram+6@gmail.com  STUDENT        → School A, Cohort A
  *   +7  abhay.sivaram+7@gmail.com  STUDENT        → School B, Cohort B
- *   +8  abhay.sivaram+8@gmail.com  STUDENT        → School A, no cohort (Canvas link edge case)
+ *   +8  existing.student@example.invalid  STUDENT        → School A, no cohort (Canvas link edge case)
  *
  * Password for all accounts: Playwright1!
  *
@@ -320,7 +320,7 @@ async function main() {
   }
 
   const canvasStudent = await prisma.user.upsert({
-    where: { email: "abhay.sivaram+8@gmail.com" },
+    where: { email: "existing.student@example.invalid" },
     update: {
       passwordHash,
       isTestAccount: true,
@@ -329,7 +329,7 @@ async function main() {
       cohortId: null,
     },
     create: {
-      email: "abhay.sivaram+8@gmail.com",
+      email: "existing.student@example.invalid",
       name: "PW Existing Canvas Student",
       role: "STUDENT",
       passwordHash,

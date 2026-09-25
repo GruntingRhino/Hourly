@@ -107,7 +107,7 @@ function buildScenarioData(scenario: CanvasTenantScenario): {
         course_section_id: "oauth-section-bio-a",
         type: "TeacherEnrollment",
         enrollment_state: "active",
-        user: { id: "oauth-teacher-1", name: "OAuth Teacher Alpha", primary_email: "oauth.teacher.alpha@schoola.edu" },
+        user: { id: "oauth-teacher-1", name: "OAuth Teacher Alpha", primary_email: "oauth.teacher.alpha@example.invalid" },
       },
       {
         id: "oauth-enrollment-student-existing",
@@ -116,7 +116,7 @@ function buildScenarioData(scenario: CanvasTenantScenario): {
         course_section_id: "oauth-section-bio-a",
         type: "StudentEnrollment",
         enrollment_state: "active",
-        user: { id: "oauth-student-existing", name: "PW Existing Canvas Student", primary_email: "abhay.sivaram+8@gmail.com" },
+        user: { id: "oauth-student-existing", name: "PW Existing Canvas Student", primary_email: "existing.student@example.invalid" },
       },
       {
         id: "oauth-enrollment-student-1",
@@ -125,7 +125,7 @@ function buildScenarioData(scenario: CanvasTenantScenario): {
         course_section_id: "oauth-section-bio-a",
         type: "StudentEnrollment",
         enrollment_state: scenario === "student_removed" ? "deleted" : "active",
-        user: { id: "oauth-student-1", name: "OAuth Student One", primary_email: "oauth.student.one@schoola.edu" },
+        user: { id: "oauth-student-1", name: "OAuth Student One", primary_email: "oauth.student.one@example.invalid" },
       },
       {
         id: "oauth-enrollment-student-dup-1",
@@ -134,7 +134,7 @@ function buildScenarioData(scenario: CanvasTenantScenario): {
         course_section_id: "oauth-section-bio-b",
         type: "StudentEnrollment",
         enrollment_state: "active",
-        user: { id: "oauth-student-dup-1", name: "OAuth Duplicate One", primary_email: "oauth.duplicate@schoola.edu" },
+        user: { id: "oauth-student-dup-1", name: "OAuth Duplicate One", primary_email: "oauth.duplicate@example.invalid" },
       },
     ],
     [COURSE_SERVICE]: [
@@ -145,7 +145,7 @@ function buildScenarioData(scenario: CanvasTenantScenario): {
         course_section_id: "oauth-section-service",
         type: "TeacherEnrollment",
         enrollment_state: "active",
-        user: { id: "oauth-teacher-2", name: "OAuth Teacher Beta", primary_email: "oauth.teacher.beta@schoola.edu" },
+        user: { id: "oauth-teacher-2", name: "OAuth Teacher Beta", primary_email: "oauth.teacher.beta@example.invalid" },
       },
       {
         id: "oauth-enrollment-student-2",
@@ -154,7 +154,7 @@ function buildScenarioData(scenario: CanvasTenantScenario): {
         course_section_id: "oauth-section-service",
         type: "StudentEnrollment",
         enrollment_state: "active",
-        user: { id: "oauth-student-2", name: "OAuth Student Two", primary_email: "oauth.student.two@schoola.edu" },
+        user: { id: "oauth-student-2", name: "OAuth Student Two", primary_email: "oauth.student.two@example.invalid" },
       },
       {
         id: "oauth-enrollment-student-dup-2",
@@ -163,7 +163,7 @@ function buildScenarioData(scenario: CanvasTenantScenario): {
         course_section_id: "oauth-section-service",
         type: "StudentEnrollment",
         enrollment_state: "active",
-        user: { id: "oauth-student-dup-2", name: "OAuth Duplicate Two", primary_email: "oauth.duplicate@schoola.edu" },
+        user: { id: "oauth-student-dup-2", name: "OAuth Duplicate Two", primary_email: "oauth.duplicate@example.invalid" },
       },
     ],
     [COURSE_UNPUBLISHED]: [
@@ -174,7 +174,7 @@ function buildScenarioData(scenario: CanvasTenantScenario): {
         course_section_id: "oauth-section-advisory",
         type: "TeacherEnrollment",
         enrollment_state: "active",
-        user: { id: "oauth-teacher-3", name: "OAuth Teacher Gamma", primary_email: "oauth.teacher.gamma@schoola.edu" },
+        user: { id: "oauth-teacher-3", name: "OAuth Teacher Gamma", primary_email: "oauth.teacher.gamma@example.invalid" },
       },
       {
         id: "oauth-enrollment-student-3",
@@ -183,7 +183,7 @@ function buildScenarioData(scenario: CanvasTenantScenario): {
         course_section_id: "oauth-section-advisory",
         type: "StudentEnrollment",
         enrollment_state: "active",
-        user: { id: "oauth-student-3", name: "OAuth Student Three", primary_email: "oauth.student.three@schoola.edu" },
+        user: { id: "oauth-student-3", name: "OAuth Student Three", primary_email: "oauth.student.three@example.invalid" },
       },
     ],
   };

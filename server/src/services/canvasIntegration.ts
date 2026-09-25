@@ -14,10 +14,9 @@ import {
   normalizeSelectedExternalCourseIds,
 } from "../lib/lmsOutboundSecurity";
 import { getCanvasMockDataset, type CanvasMockDataset, type CanvasMockScenario } from "./canvasMock";
-import { isProdLike } from "../lib/isProdLike";
 import { assertOAuthAdministrator, claimOAuthState, createOAuthState, storeOAuthState } from "../lib/oauthState";
 
-const CANVAS_ENABLE_MOCK = process.env.CANVAS_ENABLE_MOCK === "true" || !isProdLike();
+const CANVAS_ENABLE_MOCK = process.env.CANVAS_ENABLE_MOCK === "true";
 const CANVAS_REQUEST_TIMEOUT_MS = Number(process.env.CANVAS_REQUEST_TIMEOUT_MS || 15000);
 const CANVAS_PAGE_SIZE = Math.max(1, Math.min(100, Number(process.env.CANVAS_PAGE_SIZE || 100)));
 const JWT_SECRET = process.env.JWT_SECRET as string;

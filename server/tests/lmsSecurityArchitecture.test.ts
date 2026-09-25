@@ -92,7 +92,7 @@ test("stale LMS user mappings are revalidated against the connection school", as
     );
     assert.match(
       service,
-      /where:\s*\{\s*email: student\.email,\s*role: "STUDENT",\s*schoolId: params\.schoolId,?\s*\}/,
+      /where:\s*\{\s*email:\s*normalizedEmail,\s*role: "STUDENT",\s*schoolId: params\.schoolId,?\s*\}/,
     );
   }
 });

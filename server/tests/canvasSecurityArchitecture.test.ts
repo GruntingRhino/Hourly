@@ -33,6 +33,7 @@ test("Canvas OAuth rejects unsafe tenant URLs and requires encrypted real creden
 test("Canvas preview does not create local teacher accounts", () => {
   assert.match(service, /mode/);
   assert.match(service, /PREVIEW/);
+  assert.match(service, /for \(const teacher of plan\.teacherUsers\)[\s\S]*?if \(params\.mode !== "APPLY"\)[\s\S]*?continue;[\s\S]*?ensureTeacherUser/);
 });
 
 test("Canvas mapped records and API routes remain school scoped", () => {

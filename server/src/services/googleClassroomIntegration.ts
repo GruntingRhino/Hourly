@@ -1,8 +1,10 @@
 import crypto from "crypto";
+import { AsyncLocalStorage } from "node:async_hooks";
+import { Prisma } from "@prisma/client";
 import { generateToken, hashToken } from "../lib/tokenHash";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import prisma from "../lib/prisma";
+import basePrisma from "../lib/prisma";
 import { decryptField, encryptField } from "../lib/fieldEncryption";
 import { logDataAccess } from "../lib/dataAccessLog";
 import { deactivateStudentCohortMembership, ensureStudentCohortMembership } from "../lib/studentCohorts";
@@ -18,6 +20,8 @@ import {
 } from "../lib/lmsOutboundSecurity";
 import { getGoogleClassroomMockDataset, type GoogleClassroomMockDataset, type GoogleClassroomMockScenario } from "./googleClassroomMock";
 import { createClassroomStudentEmailRegistry } from "./googleClassroomSyncNormalization";
+import { isMappingInSelectedSyncScope, selectedSectionIdsForCleanup } from "./lmsSyncScope";
+import { finalizeFailedApply, runExclusiveApplyTransaction } from "./lmsSyncApply";
 import { isPubliclyDeployed } from "../lib/isProdLike";
 import { assertOAuthAdministrator, claimOAuthState, createOAuthState, storeOAuthState } from "../lib/oauthState";
 
@@ -29,6 +33,17 @@ const CLIENT_URL = process.env.CLIENT_URL || process.env.APP_URL || "http://127.
 const GOOGLE_CLASSROOM_CLIENT_ID = process.env.GOOGLE_CLASSROOM_CLIENT_ID || "";
 const GOOGLE_CLASSROOM_CLIENT_SECRET = process.env.GOOGLE_CLASSROOM_CLIENT_SECRET || "";
 const GOOGLE_CLASSROOM_CALLBACK_URL = process.env.GOOGLE_CLASSROOM_CALLBACK_URL || "http://localhost:3001/api/integrations/googleClassroom/oauth/callback";
+
+const syncTransactionContext = new AsyncLocalStorage<Prisma.TransactionClient>();
+const prisma = new Proxy(basePrisma, {
+  get(_target, property) {
+    const db = syncTransactionContext.getStore() ?? basePrisma;
+    const value = Reflect.get(db, property);
+    return typeof value === "function" ? value.bind(db) : value;
+  },
+}) as typeof basePrisma;
+
+type SyncDatabase = typeof prisma | Prisma.TransactionClient;
 const googleClassroomConnectSchema = z.discriminatedUnion("mode", [
   z.object({
     mode: z.literal("MOCK"),
@@ -531,9 +546,10 @@ async function createSyncErrorRecords(params: {
   connectionId: string;
   schoolId: string;
   errors: SyncErrorInput[];
+  db: SyncDatabase;
 }): Promise<void> {
   if (!params.errors.length) return;
-  await prisma.integrationSyncError.createMany({
+  await params.db.integrationSyncError.createMany({
     data: params.errors.map((error) => ({
       syncJobId: params.syncJobId,
       connectionId: params.connectionId,
@@ -798,9 +814,10 @@ async function ensureTeacherUser(params: {
   email: string;
   errors: SyncErrorInput[];
   summary: SyncSummary;
+  db: SyncDatabase;
 }): Promise<string | null> {
   const email = normalizeEmail(params.email);
-  const existing = await prisma.user.findUnique({ where: { email } });
+  const existing = await params.db.user.findUnique({ where: { email } });
   if (existing) {
     if (existing.schoolId !== params.schoolId || !["TEACHER", "SCHOOL_ADMIN"].includes(existing.role)) {
       params.errors.push({
@@ -816,7 +833,7 @@ async function ensureTeacherUser(params: {
   }
 
   const passwordHash = await bcrypt.hash(crypto.randomBytes(18).toString("base64url"), 8);
-  const created = await prisma.user.create({
+  const created = await params.db.user.create({
     data: {
       email,
       passwordHash,
@@ -824,7 +841,7 @@ async function ensureTeacherUser(params: {
       role: "TEACHER",
       schoolId: params.schoolId,
       emailVerified: true,
-      isTestAccount: true,
+      isTestAccount: false,
     },
   });
   return created.id;
@@ -834,15 +851,16 @@ async function reconcileRemovedStudentEnrollment(params: {
   mapping: any;
   schoolId: string;
   operations: SyncSummary["operations"];
+  db: SyncDatabase;
 }): Promise<void> {
   if (params.mapping.localType === "StudentInvitation") {
-    const invitation = await prisma.studentInvitation.findUnique({
+    const invitation = await params.db.studentInvitation.findUnique({
       where: { id: params.mapping.localId },
       select: { id: true, status: true, email: true },
     });
     if (!invitation || invitation.status !== "PENDING") return;
 
-    const otherActiveMappings = await prisma.integrationExternalMapping.count({
+    const otherActiveMappings = await params.db.integrationExternalMapping.count({
       where: {
         id: { not: params.mapping.id },
         connectionId: params.mapping.connectionId,
@@ -853,7 +871,7 @@ async function reconcileRemovedStudentEnrollment(params: {
       },
     });
     if (otherActiveMappings === 0) {
-      await prisma.studentInvitation.update({
+      await params.db.studentInvitation.update({
         where: { id: invitation.id },
         data: { status: "REVOKED" },
       });
@@ -867,7 +885,7 @@ async function reconcileRemovedStudentEnrollment(params: {
   }
 
   if (params.mapping.localType === "StudentCohortMembership") {
-    const membership = await prisma.studentCohortMembership.findUnique({
+    const membership = await params.db.studentCohortMembership.findUnique({
       where: { id: params.mapping.localId },
       select: { id: true, studentId: true, cohortId: true, student: { select: { email: true } }, cohort: { select: { name: true } } },
     });
@@ -876,6 +894,7 @@ async function reconcileRemovedStudentEnrollment(params: {
       studentId: membership.studentId,
       cohortId: membership.cohortId,
       clearPrimaryIfMatches: true,
+      db: params.db,
     });
     params.operations.push({
       type: "student-membership",
@@ -887,7 +906,7 @@ async function reconcileRemovedStudentEnrollment(params: {
 
   if (params.mapping.localType === "User") {
     const sectionMapping = params.mapping.externalParentId
-      ? await prisma.integrationExternalMapping.findFirst({
+      ? await params.db.integrationExternalMapping.findFirst({
           where: {
             connectionId: params.mapping.connectionId,
             externalType: "COURSE",
@@ -901,6 +920,7 @@ async function reconcileRemovedStudentEnrollment(params: {
         studentId: params.mapping.localId,
         cohortId: sectionMapping.localId,
         clearPrimaryIfMatches: true,
+        db: params.db,
       });
     }
   }
@@ -945,15 +965,17 @@ async function runGoogleClassroomSync(params: {
     });
     throw error;
   }
-  if (params.mode === "APPLY") {
-    await prisma.integrationConnection.update({
-      where: { id: connection.id },
-      data: {
-        config: JSON.stringify({ ...config, selectedExternalCourseIds }),
-        updatedById: params.actorId,
-      },
-    });
-  }
+  const runPlan = async (db: SyncDatabase) => {
+    return syncTransactionContext.run(db, async () => {
+      if (params.mode === "APPLY") {
+        await prisma.integrationConnection.update({
+          where: { id: connection.id },
+          data: {
+            config: JSON.stringify({ ...config, selectedExternalCourseIds }),
+            updatedById: params.actorId,
+          },
+        });
+      }
   const plans = buildSectionPlans(dataset).sort((a, b) => a.cohortName.localeCompare(b.cohortName));
   const summary: SyncSummary = {
     provider: "GOOGLE_CLASSROOM",
@@ -1076,12 +1098,17 @@ async function runGoogleClassroomSync(params: {
     if (!targetCohortId) continue;
 
     for (const teacher of plan.teacherUsers) {
+      if (params.mode !== "APPLY") {
+        summary.operations.push({ type: "teacher-assignment", target: `${teacher.email} -> ${plan.cohortName}`, action: "preview" });
+        continue;
+      }
       const teacherId = await ensureTeacherUser({
         schoolId: params.schoolId,
         name: teacher.name,
         email: teacher.email,
         errors,
         summary,
+        db: prisma,
       });
       if (!teacherId) continue;
 
@@ -1158,7 +1185,7 @@ async function runGoogleClassroomSync(params: {
       if (!existingStudent) {
         existingStudent = await prisma.user.findFirst({
           where: {
-            email: student.email,
+            email: normalizedEmail,
             role: "STUDENT",
             schoolId: params.schoolId,
           },
@@ -1176,6 +1203,7 @@ async function runGoogleClassroomSync(params: {
             source: "GOOGLE_CLASSROOM",
             forcePrimary: !existingStudent.cohortId,
             schoolId: params.schoolId,
+            db: prisma,
           });
           if (!existingStudent.cohortId) {
             summary.counts.usersAssignedToCohort++;
@@ -1241,7 +1269,7 @@ async function runGoogleClassroomSync(params: {
       }
 
       const existingInvitation = await prisma.studentInvitation.findUnique({
-        where: { cohortId_email: { cohortId: targetCohortId, email: student.email } },
+        where: { cohortId_email: { cohortId: targetCohortId, email: normalizedEmail } },
       });
 
       if (existingInvitation) {
@@ -1293,7 +1321,7 @@ async function runGoogleClassroomSync(params: {
         const invitation = await prisma.studentInvitation.create({
           data: {
             cohortId: targetCohortId,
-            email: student.email,
+            email: normalizedEmail,
             name: student.name,
             token: hashToken(generateToken()), // never emailed here — publish rotates to a fresh token
             expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
@@ -1332,7 +1360,19 @@ async function runGoogleClassroomSync(params: {
     }
   }
 
-  const mappedSectionsToArchive = sectionMappings.filter((mapping) => mapping.isActive && !activeSectionIds.has(mapping.externalId));
+  const selectedSectionIds = selectedSectionIdsForCleanup(
+    sectionMappings,
+    selectedExternalCourseIds,
+    plans.map((plan) => plan.sectionId),
+  );
+  const mappedSectionsToArchive = sectionMappings.filter((mapping) =>
+    mapping.isActive && isMappingInSelectedSyncScope({
+      mapping,
+      selectedExternalCourseIds,
+      selectedSectionIds,
+      mappingParent: "course",
+    }) && !activeSectionIds.has(mapping.externalId)
+  );
   for (const mapping of mappedSectionsToArchive) {
     summary.counts.cohortsArchived++;
     summary.operations.push({ type: "cohort", target: mapping.externalName ?? mapping.externalId, action: "archive-missing-upstream" });
@@ -1348,7 +1388,14 @@ async function runGoogleClassroomSync(params: {
     }
   }
 
-  const enrollmentMappingsToDeactivate = enrollmentMappings.filter((mapping) => mapping.isActive && !activeEnrollmentIds.has(mapping.externalId));
+  const enrollmentMappingsToDeactivate = enrollmentMappings.filter((mapping) =>
+    mapping.isActive && isMappingInSelectedSyncScope({
+      mapping,
+      selectedExternalCourseIds,
+      selectedSectionIds,
+      mappingParent: "section",
+    }) && !activeEnrollmentIds.has(mapping.externalId)
+  );
   for (const mapping of enrollmentMappingsToDeactivate) {
     summary.operations.push({
       type: "enrollment",
@@ -1360,6 +1407,7 @@ async function runGoogleClassroomSync(params: {
         mapping,
         schoolId: params.schoolId,
         operations: summary.operations,
+        db: prisma,
       });
       await prisma.integrationExternalMapping.update({
         where: { id: mapping.id },
@@ -1381,6 +1429,7 @@ async function runGoogleClassroomSync(params: {
       connectionId: connection.id,
       schoolId: params.schoolId,
       errors,
+      db: prisma,
     });
   }
 
@@ -1402,24 +1451,47 @@ async function runGoogleClassroomSync(params: {
     },
   });
 
-  await logDataAccess({
-    actorId: params.actorId,
-    action: params.mode === "APPLY" ? "GOOGLE_CLASSROOM_SYNC_APPLY" : "GOOGLE_CLASSROOM_SYNC_PREVIEW",
-    targetType: "school",
-    targetId: params.schoolId,
-    schoolId: params.schoolId,
-    details: {
-      provider: "GOOGLE_CLASSROOM",
-      scenario: dataset.scenario,
-      summary: summary.counts,
-    },
-  });
-
   return {
     connection,
     job: { ...job, status: nextStatus, summary: JSON.stringify(summary), finishedAt: new Date() },
     summary,
   };
+    });
+  };
+
+  try {
+    const result = params.mode === "APPLY"
+      ? await runExclusiveApplyTransaction({
+          connectionId: connection.id,
+          previousSyncJobId: connection.lastSyncJobId,
+          syncJobId: job.id,
+          run: runPlan,
+        })
+      : await runPlan(basePrisma);
+    await logDataAccess({
+      actorId: params.actorId,
+      action: params.mode === "APPLY" ? "GOOGLE_CLASSROOM_SYNC_APPLY" : "GOOGLE_CLASSROOM_SYNC_PREVIEW",
+      targetType: "school",
+      targetId: params.schoolId,
+      schoolId: params.schoolId,
+      details: {
+        provider: "GOOGLE_CLASSROOM",
+        scenario: dataset.scenario,
+        summary: result.summary.counts,
+      },
+    });
+    return result;
+  } catch (error) {
+    if (params.mode === "APPLY") {
+      await finalizeFailedApply({
+        connectionId: connection.id,
+        previousSyncJobId: connection.lastSyncJobId,
+        syncJobId: job.id,
+        stage: "APPLY_TRANSACTION",
+      });
+    }
+    throw error;
+  }
 }
 
 export async function getGoogleClassroomOAuthUrlForSchool(params: {

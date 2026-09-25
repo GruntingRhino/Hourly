@@ -14,6 +14,7 @@ import {
   normalizeSelectedExternalCourseIds,
 } from "../lib/lmsOutboundSecurity";
 import { getCanvasMockDataset, type CanvasMockDataset, type CanvasMockScenario } from "./canvasMock";
+import { partitionStudentsWithinSection } from "./canvasSyncNormalization";
 import { assertOAuthAdministrator, claimOAuthState, createOAuthState, storeOAuthState } from "../lib/oauthState";
 
 const CANVAS_ENABLE_MOCK = process.env.CANVAS_ENABLE_MOCK === "true";
@@ -942,7 +943,6 @@ async function runCanvasSync(params: {
   const errors: SyncErrorInput[] = [];
   const activeSectionIds = new Set<string>();
   const activeEnrollmentIds = new Set<string>();
-  const seenStudentEmails = new Map<string, string>();
 
   const [sectionMappings, enrollmentMappings, userMappings] = await Promise.all([
     prisma.integrationExternalMapping.findMany({
@@ -1096,23 +1096,22 @@ async function runCanvasSync(params: {
       }
     }
 
-    for (const student of plan.studentUsers) {
+    const { unique: uniqueStudents, duplicates: duplicateStudents } = partitionStudentsWithinSection(plan.studentUsers);
+    for (const duplicate of duplicateStudents) {
+      errors.push({
+        externalType: "USER",
+        externalId: duplicate.student.id,
+        code: "DUPLICATE_STUDENT_EMAIL",
+        message: `Duplicate Canvas student email detected for ${normalizeEmail(duplicate.student.email)}.`,
+        details: { existingExternalId: duplicate.existingExternalId },
+      });
+      summary.counts.errors++;
+      summary.counts.skipped++;
+    }
+
+    for (const student of uniqueStudents) {
       activeEnrollmentIds.add(student.enrollmentId);
       const normalizedEmail = normalizeEmail(student.email);
-      const existingEmailOwner = seenStudentEmails.get(normalizedEmail);
-      if (existingEmailOwner && existingEmailOwner !== student.id) {
-        errors.push({
-          externalType: "USER",
-          externalId: student.id,
-          code: "DUPLICATE_STUDENT_EMAIL",
-          message: `Duplicate Canvas student email detected for ${normalizedEmail}.`,
-          details: { existingExternalId: existingEmailOwner },
-        });
-        summary.counts.errors++;
-        summary.counts.skipped++;
-        continue;
-      }
-      seenStudentEmails.set(normalizedEmail, student.id);
 
       let existingStudent: { id: string; cohortId: string | null; schoolId: string | null } | null = null;
       const mappedUser = userMappingByExternalId.get(student.id);

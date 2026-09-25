@@ -1,20 +1,27 @@
 import assert from "node:assert/strict";
-import fs from "node:fs";
-import path from "node:path";
 import test from "node:test";
+import { createClassroomStudentEmailRegistry } from "../src/services/googleClassroomSyncNormalization";
 
-const root = path.resolve(import.meta.dirname, "..");
-const source = fs.readFileSync(path.join(root, "src/services/googleClassroomIntegration.ts"), "utf8");
+const student = (id: string, email: string) => ({ id, email });
 
-test("same email in two Classroom cohorts is not treated as a duplicate", () => {
-  assert.match(source, /seenStudentEmails = new Map<string, \{ id: string; cohortId: string \}>\(\)/);
-  assert.match(source, /existingEmailOwner\.cohortId === targetCohortId/);
+test("the same Google Classroom user may appear in two cohorts", () => {
+  const registry = createClassroomStudentEmailRegistry();
+
+  assert.equal(registry.record(student("user-1", "shared@example.test"), "cohort-a"), null);
+  assert.equal(registry.record(student("user-1", "SHARED@example.test"), "cohort-b"), null);
 });
 
-test("same email twice in one cohort still fails closed", () => {
-  const block = source.slice(source.indexOf("const existingEmailOwner = seenStudentEmails.get"), source.indexOf("seenStudentEmails.set", source.indexOf("const existingEmailOwner = seenStudentEmails.get")));
-  assert.match(block, /code: "DUPLICATE_STUDENT_EMAIL"/);
-  assert.match(block, /summary\.counts\.errors\+\+/);
-  assert.match(block, /summary\.counts\.skipped\+\+/);
-  assert.match(block, /continue;/);
+test("interleaved cohorts still reject different users with the same email in the same cohort", () => {
+  const registry = createClassroomStudentEmailRegistry();
+
+  assert.equal(registry.record(student("user-1", "shared@example.test"), "cohort-a"), null);
+  assert.equal(registry.record(student("user-2", "shared@example.test"), "cohort-b"), null);
+  assert.equal(registry.record(student("user-3", "shared@example.test"), "cohort-a"), "user-1");
+});
+
+test("a second external user with the same email in one cohort fails closed", () => {
+  const registry = createClassroomStudentEmailRegistry();
+
+  assert.equal(registry.record(student("user-1", "shared@example.test"), "cohort-a"), null);
+  assert.equal(registry.record(student("user-2", "shared@example.test"), "cohort-a"), "user-1");
 });

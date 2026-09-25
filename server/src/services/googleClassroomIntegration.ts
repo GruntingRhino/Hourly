@@ -17,6 +17,7 @@ import {
   normalizeSelectedExternalCourseIds,
 } from "../lib/lmsOutboundSecurity";
 import { getGoogleClassroomMockDataset, type GoogleClassroomMockDataset, type GoogleClassroomMockScenario } from "./googleClassroomMock";
+import { createClassroomStudentEmailRegistry } from "./googleClassroomSyncNormalization";
 import { isPubliclyDeployed } from "../lib/isProdLike";
 import { assertOAuthAdministrator, claimOAuthState, createOAuthState, storeOAuthState } from "../lib/oauthState";
 
@@ -975,7 +976,7 @@ async function runGoogleClassroomSync(params: {
   const errors: SyncErrorInput[] = [];
   const activeSectionIds = new Set<string>();
   const activeEnrollmentIds = new Set<string>();
-  const seenStudentEmails = new Map<string, { id: string; cohortId: string }>();
+  const studentEmailRegistry = createClassroomStudentEmailRegistry();
 
   const [sectionMappings, enrollmentMappings, userMappings] = await Promise.all([
     prisma.integrationExternalMapping.findMany({
@@ -1132,22 +1133,19 @@ async function runGoogleClassroomSync(params: {
     for (const student of plan.studentUsers) {
       activeEnrollmentIds.add(student.enrollmentId);
       const normalizedEmail = normalizeEmail(student.email);
-      const existingEmailOwner = seenStudentEmails.get(normalizedEmail);
-      if (existingEmailOwner && existingEmailOwner.id !== student.id) {
-        if (existingEmailOwner.cohortId === targetCohortId) {
-          errors.push({
-            externalType: "USER",
-            externalId: student.id,
-            code: "DUPLICATE_STUDENT_EMAIL",
-            message: `Duplicate Google Classroom student email detected for ${normalizedEmail}.`,
-            details: { existingExternalId: existingEmailOwner.id },
-          });
-          summary.counts.errors++;
-          summary.counts.skipped++;
-          continue;
-        }
+      const existingExternalId = studentEmailRegistry.record(student, targetCohortId);
+      if (existingExternalId) {
+        errors.push({
+          externalType: "USER",
+          externalId: student.id,
+          code: "DUPLICATE_STUDENT_EMAIL",
+          message: `Duplicate Google Classroom student email detected for ${normalizedEmail}.`,
+          details: { existingExternalId },
+        });
+        summary.counts.errors++;
+        summary.counts.skipped++;
+        continue;
       }
-      seenStudentEmails.set(normalizedEmail, { id: student.id, cohortId: targetCohortId });
 
       let existingStudent: { id: string; cohortId: string | null; schoolId: string | null } | null = null;
       const mappedUser = userMappingByExternalId.get(student.id);

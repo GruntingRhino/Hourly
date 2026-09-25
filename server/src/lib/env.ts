@@ -193,8 +193,9 @@ function validateEnv(): Record<RequiredEnv, string> & Partial<Record<OptionalEnv
     }
 
     const classroomMockEnabled = process.env.GOOGLE_CLASSROOM_ENABLE_MOCK === "true";
-    if (classroomMockEnabled && process.env.VERCEL_PROJECT_ID === "prj_ZP9k4HEjRT8sMEKzsvcSsHXVMVai") {
-      console.error("❌ GOOGLE_CLASSROOM_ENABLE_MOCK=true is not allowed on GoodHours production.");
+    const approvedIsolatedClassroomStagingProject = process.env.VERCEL_PROJECT_ID === "prj_4EDHs3MHJR4dcOzQJAFNAXk9rYsu";
+    if (classroomMockEnabled && !approvedIsolatedClassroomStagingProject) {
+      console.error("❌ GOOGLE_CLASSROOM_ENABLE_MOCK=true is only allowed on the approved isolated Google Classroom staging project.");
       process.exit(1);
     }
 

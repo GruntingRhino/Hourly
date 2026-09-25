@@ -1403,7 +1403,7 @@ export async function getCanvasOAuthUrlForSchool(params: {
     schoolId: params.schoolId, actorId: params.actorId, baseUrl: normalizedBaseUrl, displayName,
   });
   const scope = encodeURIComponent(
-    "url:GET|/api/v1/courses url:GET|/api/v1/courses/:course_id/sections url:GET|/api/v1/courses/:course_id/enrollments"
+    "url:GET|/api/v1/accounts url:GET|/api/v1/courses url:GET|/api/v1/courses/:course_id/sections url:GET|/api/v1/courses/:course_id/enrollments"
   );
   const url =
     `${normalizedBaseUrl}/login/oauth2/auth?client_id=${encodeURIComponent(CANVAS_CLIENT_ID)}` +

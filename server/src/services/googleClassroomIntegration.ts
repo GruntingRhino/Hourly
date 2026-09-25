@@ -975,7 +975,7 @@ async function runGoogleClassroomSync(params: {
   const errors: SyncErrorInput[] = [];
   const activeSectionIds = new Set<string>();
   const activeEnrollmentIds = new Set<string>();
-  const seenStudentEmails = new Map<string, string>();
+  const seenStudentEmails = new Map<string, { id: string; cohortId: string }>();
 
   const [sectionMappings, enrollmentMappings, userMappings] = await Promise.all([
     prisma.integrationExternalMapping.findMany({
@@ -1133,19 +1133,21 @@ async function runGoogleClassroomSync(params: {
       activeEnrollmentIds.add(student.enrollmentId);
       const normalizedEmail = normalizeEmail(student.email);
       const existingEmailOwner = seenStudentEmails.get(normalizedEmail);
-      if (existingEmailOwner && existingEmailOwner !== student.id) {
-        errors.push({
-          externalType: "USER",
-          externalId: student.id,
-          code: "DUPLICATE_STUDENT_EMAIL",
-          message: `Duplicate Google Classroom student email detected for ${normalizedEmail}.`,
-          details: { existingExternalId: existingEmailOwner },
-        });
-        summary.counts.errors++;
-        summary.counts.skipped++;
-        continue;
+      if (existingEmailOwner && existingEmailOwner.id !== student.id) {
+        if (existingEmailOwner.cohortId === targetCohortId) {
+          errors.push({
+            externalType: "USER",
+            externalId: student.id,
+            code: "DUPLICATE_STUDENT_EMAIL",
+            message: `Duplicate Google Classroom student email detected for ${normalizedEmail}.`,
+            details: { existingExternalId: existingEmailOwner.id },
+          });
+          summary.counts.errors++;
+          summary.counts.skipped++;
+          continue;
+        }
       }
-      seenStudentEmails.set(normalizedEmail, student.id);
+      seenStudentEmails.set(normalizedEmail, { id: student.id, cohortId: targetCohortId });
 
       let existingStudent: { id: string; cohortId: string | null; schoolId: string | null } | null = null;
       const mappedUser = userMappingByExternalId.get(student.id);

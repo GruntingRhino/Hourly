@@ -10,8 +10,8 @@ test("Canvas OAuth keeps the exact hourly-dev callback and the scopes consumed b
   assert.match(source, /CANVAS_CALLBACK_URL/);
   assert.match(source, /login\/oauth2\/auth\?client_id=/);
   assert.match(source, /redirect_uri=\$\{encodeURIComponent\(CANVAS_CALLBACK_URL\)\}/);
-  assert.match(source, /url:GET\|\/api\/v1\/accounts/);
   assert.match(source, /url:GET\|\/api\/v1\/courses/);
   assert.match(source, /url:GET\|\/api\/v1\/courses\/:course_id\/sections/);
   assert.match(source, /url:GET\|\/api\/v1\/courses\/:course_id\/enrollments/);
+  assert.doesNotMatch(source, /url:GET\|\/api\/v1\/accounts/);
 });
